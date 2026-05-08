@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Computational Design Pipeline</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <div>
+        <span class="logo-title">Computational Design</span>
+        <span class="logo-sub">AI-Driven Design Pipeline</span>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge">OpenSCAD</span>
+      <span class="badge">Ollama</span>
+      <span class="badge">3D Print</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Input ──────────────────────────────────────────────────────────────── -->
+<section class="input-section">
+  <div class="input-card">
+    <h2>Describe your project</h2>
+    <p class="input-hint">Describe what you want to build. Include purpose, rough size, and any constraints.</p>
+    <div class="input-row">
+      <textarea id="description" rows="3" placeholder="e.g. A wall-mount holder for a Raspberry Pi 4 with ventilation slots, hidden cable routing, and a magnetic front cover. About 100×80×40mm, printed in PETG."></textarea>
+    </div>
+    <div class="input-controls">
+      <div class="examples">
+        <span class="examples-label">Examples:</span>
+        <button class="example-btn" data-text="A compact desktop organizer for pens, scissors, and a phone stand. About 200mm wide, 120mm deep, with 3 separate compartments and a phone cradle at 65°.">Desktop organizer</button>
+        <button class="example-btn" data-text="A parametric gear reduction box with two spur gears, 4:1 ratio, 3mm input shaft, 5mm output shaft. Must fit in a 60×60×40mm envelope.">Gear box</button>
+        <button class="example-btn" data-text="A snap-fit enclosure for an Arduino Uno with access holes for USB and power jack, 4 M3 standoffs, and ventilation slots on both sides.">Arduino enclosure</button>
+      </div>
+      <button id="design-btn" class="design-btn">
+        <span class="btn-icon">⬡</span> Design it
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pipeline ───────────────────────────────────────────────────────────── -->
+<main id="pipeline" class="pipeline hidden">
+
+  <!-- Stage 1: Brief -->
+  <div class="stage-card" id="stage-1" data-stage="1">
+    <div class="stage-header">
+      <div class="stage-meta">
+        <span class="stage-num">01</span>
+        <span class="stage-icon">🎯</span>
+        <div>
+          <span class="stage-name">Design Brief</span>
+          <span class="stage-desc">Extract structured spec from description</span>
+        </div>
+      </div>
+      <span class="stage-badge pending">Pending</span>
+    </div>
+    <div class="stage-body">
+      <div class="stage-placeholder">Waiting for pipeline to start…</div>
+      <div class="stage-content hidden">
+        <div class="brief-grid" id="brief-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 2: OpenSCAD Code -->
+  <div class="stage-card" id="stage-2" data-stage="2">
+    <div class="stage-header">
+      <div class="stage-meta">
+        <span class="stage-num">02</span>
+        <span class="stage-icon">🔧</span>
+        <div>
+          <span class="stage-name">Parametric Model</span>
+          <span class="stage-desc">Generate OpenSCAD source code</span>
+        </div>
+      </div>
+      <span class="stage-badge pending">Pending</span>
+    </div>
+    <div class="stage-body">
+      <div class="stage-placeholder">Waiting…</div>
+      <div class="stage-content hidden">
+        <div class="code-toolbar">
+          <span class="code-lang">OpenSCAD</span>
+          <a id="scad-download" class="code-action hidden" href="#" download="model.scad">⬇ Download .scad</a>
+        </div>
+        <pre><code id="scad-code" class="language-cpp"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 3: Render -->
+  <div class="stage-card" id="stage-3" data-stage="3">
+    <div class="stage-header">
+      <div class="stage-meta">
+        <span class="stage-num">03</span>
+        <span class="stage-icon">🖼</span>
+        <div>
+          <span class="stage-name">Render &amp; Export</span>
+          <span class="stage-desc">PNG preview + STL via OpenSCAD CLI</span>
+        </div>
+      </div>
+      <span class="stage-badge pending">Pending</span>
+    </div>
+    <div class="stage-body">
+      <div class="stage-placeholder">Waiting…</div>
+      <div class="stage-content hidden">
+        <div class="render-layout">
+          <div class="render-left">
+            <div id="render-png-wrap" class="render-panel hidden">
+              <img id="render-png" src="" alt="Model preview" />
+              <span class="render-label">PNG Preview</span>
+            </div>
+            <div id="render-fallback" class="render-fallback hidden">
+              <span class="fallback-icon">📦</span>
+              <p>OpenSCAD not installed — 3D render unavailable.</p>
+              <p>The .scad file is valid and can be opened in <a href="https://openscad.org" target="_blank">openscad.org</a></p>
+            </div>
+          </div>
+          <div class="render-right">
+            <div id="stl-viewer" class="stl-viewer">
+              <div id="stl-canvas-wrap"></div>
+              <div id="stl-loading" class="stl-msg">
+                <span class="spin">⬡</span> Loading 3D model…
+              </div>
+              <div id="stl-unavailable" class="stl-msg hidden">
+                <span>📐</span>
+                <p>3D preview requires OpenSCAD.<br/>Install it to enable STL export.</p>
+              </div>
+            </div>
+            <div class="render-actions">
+              <a id="stl-download" class="action-btn hidden" href="#" download="model.stl">⬇ Download STL</a>
+            </div>
+            <span class="render-label">Interactive 3D Preview</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 4: Optimize -->
+  <div class="stage-card" id="stage-4" data-stage="4">
+    <div class="stage-header">
+      <div class="stage-meta">
+        <span class="stage-num">04</span>
+        <span class="stage-icon">⚡</span>
+        <div>
+          <span class="stage-name">Printability Optimization</span>
+          <span class="stage-desc">Analyze overhangs, walls, tolerances</span>
+        </div>
+      </div>
+      <span class="stage-badge pending">Pending</span>
+    </div>
+    <div class="stage-body">
+      <div class="stage-placeholder">Waiting…</div>
+      <div class="stage-content hidden">
+        <div id="opt-issues" class="issues-list"></div>
+        <div id="opt-summary" class="opt-summary"></div>
+        <div class="code-toolbar" id="opt-code-toolbar">
+          <span class="code-lang">OpenSCAD — Optimized</span>
+        </div>
+        <pre><code id="opt-code" class="language-cpp"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 5: Print Settings -->
+  <div class="stage-card" id="stage-5" data-stage="5">
+    <div class="stage-header">
+      <div class="stage-meta">
+        <span class="stage-num">05</span>
+        <span class="stage-icon">📐</span>
+        <div>
+          <span class="stage-name">Print Settings</span>
+          <span class="stage-desc">Slicer configuration for best results</span>
+        </div>
+      </div>
+      <span class="stage-badge pending">Pending</span>
+    </div>
+    <div class="stage-body">
+      <div class="stage-placeholder">Waiting…</div>
+      <div class="stage-content hidden">
+        <div id="print-settings-grid" class="settings-grid"></div>
+        <div id="print-notes" class="print-notes"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage 6: BOM -->
+  <div class="stage-card" id="stage-6" data-stage="6">
+    <div class="stage-header">
+      <div class="stage-meta">
+        <span class="stage-num">06</span>
+        <span class="stage-icon">🛒</span>
+        <div>
+          <span class="stage-name">BOM &amp; Parts Sourcing</span>
+          <span class="stage-desc">Bill of materials with catalog matches</span>
+        </div>
+      </div>
+      <span class="stage-badge pending">Pending</span>
+    </div>
+    <div class="stage-body">
+      <div class="stage-placeholder">Waiting…</div>
+      <div class="stage-content hidden">
+        <table class="bom-table" id="bom-table">
+          <thead>
+            <tr><th>#</th><th>Item</th><th>SKU</th><th>Qty</th><th>Unit</th><th>Unit Price</th><th>Subtotal</th><th>Status</th></tr>
+          </thead>
+          <tbody id="bom-tbody"></tbody>
+        </table>
+        <div id="bom-footer" class="bom-footer"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer>
+  <p>AI Computational Design Pipeline · Ollama + OpenSCAD · port 8004</p>
+  <p class="footer-note">OpenSCAD code is generated by an LLM — always review before printing.</p>
+</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three":          "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
