@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAG Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Retrieval-Augmented Generation · Chunk · Embed · Retrieve · Generate</p>
+        <h1>RAG Explorer</h1>
+        <p class="lede">
+          Ask a question and watch the full RAG pipeline execute step by step:
+          query embedding → similarity search → context injection → grounded response.
+        </p>
+      </div>
+      <div class="hero-right">
+        <div class="pills">
+          <button class="info-pill" id="modelPill">
+            <span class="info-pill-label">Chat</span>
+            <span class="info-pill-value" id="modelName">…</span>
+          </button>
+          <button class="info-pill" id="embedPill">
+            <span class="info-pill-label">Embed</span>
+            <span class="info-pill-value" id="embedName">…</span>
+          </button>
+        </div>
+        <div class="status-row">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-text" id="statusText">Connecting…</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Knowledge base overview -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>📂 Knowledge Base</h2>
+        <div class="panel-meta" id="indexMeta">Loading…</div>
+        <button class="btn small" id="reindexBtn">Re-index</button>
+      </div>
+      <div class="chunks-grid" id="chunksGrid">
+        <div class="loading-placeholder">Loading indexed chunks…</div>
+      </div>
+      <p class="hint">Each card is a chunk stored as a vector in the index. Highlighted chunks appear in retrieval results.</p>
+    </section>
+
+    <!-- Query + pipeline -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>🔍 Ask a Question</h2>
+        <label class="toggle-label">
+          <input type="checkbox" id="ragToggle" checked />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span>RAG enabled</span>
+        </label>
+      </div>
+
+      <div class="query-row">
+        <input id="queryInput" type="text"
+          placeholder="Try: Quantos dependentes posso incluir no plano de saúde?" />
+        <button class="btn primary" id="askBtn">Ask</button>
+      </div>
+
+      <div class="suggestions">
+        <span class="suggestion-label">Try:</span>
+        <button class="suggestion" data-q="Quantos dependentes posso incluir no plano de saúde?">Dependentes no plano de saúde</button>
+        <button class="suggestion" data-q="Qual é a duração da licença-maternidade?">Licença-maternidade</button>
+        <button class="suggestion" data-q="Tenho direito a auxílio home office?">Auxílio home office</button>
+        <button class="suggestion" data-q="Quantos dias de férias tenho por ano?">Férias anuais</button>
+        <button class="suggestion" data-q="Qual o valor do vale-refeição?">Vale-refeição</button>
+      </div>
+    </section>
+
+    <!-- Pipeline steps (shown after query) -->
+    <div id="pipeline" class="pipeline hidden">
+
+      <!-- Step 1: Embedding -->
+      <div class="step-card" id="stepEmbed">
+        <div class="step-header">
+          <span class="step-num">1</span>
+          <span class="step-icon">⚡</span>
+          <span class="step-title">Query Embedding</span>
+          <span class="step-status" id="embedStatus"></span>
+        </div>
+        <div class="step-body" id="embedBody"></div>
+      </div>
+
+      <!-- Step 2: Retrieval -->
+      <div class="step-card" id="stepRetrieve">
+        <div class="step-header">
+          <span class="step-num">2</span>
+          <span class="step-icon">🔎</span>
+          <span class="step-title">Similarity Search</span>
+          <span class="step-status" id="retrieveStatus"></span>
+        </div>
+        <div class="step-body" id="retrieveBody"></div>
+      </div>
+
+      <!-- Step 3: Context injection -->
+      <div class="step-card" id="stepPrompt">
+        <div class="step-header">
+          <span class="step-num">3</span>
+          <span class="step-icon">📎</span>
+          <span class="step-title">Context Injection</span>
+          <span class="step-status" id="promptStatus"></span>
+        </div>
+        <div class="step-body" id="promptBody"></div>
+      </div>
+
+      <!-- Step 4: Response -->
+      <div class="step-card" id="stepResponse">
+        <div class="step-header">
+          <span class="step-num">4</span>
+          <span class="step-icon">💬</span>
+          <span class="step-title">Generated Response</span>
+          <span class="step-status" id="responseStatus"></span>
+        </div>
+        <div class="step-body" id="responseBody"></div>
+      </div>
+
+    </div>
+
+    <!-- No-RAG baseline (shown when toggle is off) -->
+    <div id="noRagResult" class="panel hidden">
+      <div class="panel-header">
+        <h2>⚠️ Without RAG — Direct LLM Response</h2>
+      </div>
+      <div class="no-rag-body" id="noRagBody"></div>
+      <p class="hint no-rag-hint">This response uses only the model's training data — no documents were retrieved. Compare with RAG enabled to see the difference.</p>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    Built for learning · RAG pipeline: embed → retrieve → inject → generate
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

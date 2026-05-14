@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memory Explorer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Short-term Context · Long-term Memory · Recall</p>
+        <h1>Memory Explorer</h1>
+        <p class="lede">
+          Watch an AI agent remember preferences and decisions across sessions —
+          distinguishing what lives in the context window from what survives it.
+        </p>
+      </div>
+      <div class="hero-right">
+        <button class="info-pill" id="modelPill">
+          <span class="info-pill-label">Model</span>
+          <span class="info-pill-value" id="modelName">Loading…</span>
+        </button>
+        <div class="badge">Ollama</div>
+      </div>
+    </header>
+
+    <div class="memory-layout">
+
+      <!-- Left: Chat -->
+      <section class="panel chat-panel">
+        <div class="panel-header">
+          <h2>💬 Conversation</h2>
+          <div class="session-controls">
+            <span class="session-label">Session</span>
+            <code class="session-id" id="sessionId">—</code>
+            <button class="btn small" id="newSessionBtn" title="Clear context window, keep memories">New Session</button>
+          </div>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="empty-chat" id="emptyChat">
+            <p>Start a conversation. Tell the agent your name, language preference, or an ongoing project.</p>
+            <p class="hint">Try: <em>"Hi! I'm a Python dev working on a logistics API. I avoid ORMs."</em></p>
+          </div>
+        </div>
+
+        <div class="context-bar">
+          <span class="context-item">
+            <span class="context-dot short-dot"></span>
+            Short-term
+          </span>
+          <span class="context-stats" id="contextStats">0 msgs · ~0 tokens</span>
+          <span class="context-hint">(cleared on New Session)</span>
+        </div>
+
+        <div class="input-row">
+          <textarea id="chatInput" rows="2" placeholder="Type a message…"></textarea>
+          <button class="btn primary" id="sendBtn">Send</button>
+        </div>
+      </section>
+
+      <!-- Right: Memory Store -->
+      <aside class="panel memory-panel">
+        <div class="panel-header">
+          <h2>🗃️ Long-term Memory</h2>
+          <button class="btn small danger" id="clearMemBtn">Clear All</button>
+        </div>
+
+        <div class="memory-legend">
+          <span class="badge semantic-badge">Semantic</span><span class="legend-text">preferences · facts</span>
+          <span class="badge episodic-badge">Episodic</span><span class="legend-text">events · decisions</span>
+        </div>
+
+        <div class="memories" id="memories">
+          <div class="empty-mem" id="emptyMem">
+            <p>No memories yet.</p>
+            <p class="hint">The agent saves context here with <code>remember()</code>.<br/>This panel persists across New Sessions.</p>
+          </div>
+        </div>
+
+        <div class="memory-footer">
+          <span class="memory-count" id="memoryCount">0 memories</span>
+          <span class="memory-note">Survives <strong>New Session</strong></span>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    Built for learning · Recall uses keyword search — production systems use vector embeddings
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
