@@ -1,6 +1,6 @@
 # 🤖 AI Agents from Scratch — Tutorial
 
-**👉 [Open the Tutorial](https://paulocavalin.github.io/agentic-ai-tutorial/tutorial/index.html)**
+**👉 [Open the Tutorial](https://paulocavalin.github.io/agentic-ai-tutorial/)**
 
 A progressive, bilingual (EN/PT) guide to building AI agents — from a simple tool-calling loop to MCP-powered multi-server architectures.
 
