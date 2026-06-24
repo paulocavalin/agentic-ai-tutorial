@@ -5,6 +5,18 @@ Default model: **gemma4:12b** via `http://localhost:11434/v1`.
 
 > 📖 **[Open the Tutorial](https://paulocavalin.github.io/agentic-ai-tutorial/)** — A progressive, bilingual (EN/PT) guide covering all examples.
 
+> ℹ️ **Origin & provenance.** This is a personal, educational refactor and
+> expansion of my earlier project
+> **[genai_resources](https://github.com/paulocavalin/genai_resources)**
+> (originally written and published **March–May 2026**, before my current
+> employment; see that repo's commit history for dates, and this repo's history,
+> which is linked back to it). It teaches broad, publicly-documented
+> generative-AI and agent concepts using local open models, and contains **no
+> confidential or proprietary material**. It is an **independent personal
+> project**: the code and views here are my own, were developed on personal time
+> and equipment, and **do not represent my employer**. Not affiliated with,
+> endorsed by, or sponsored by any employer.
+
 
 ## Directory Structure
 
