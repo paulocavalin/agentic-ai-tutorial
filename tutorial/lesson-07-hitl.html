@@ -18,7 +18,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lesson 6: Human-in-the-Loop Approval — AI Agents from Scratch</title>
+<title>Lesson 7: Human-in-the-Loop Approval — AI Agents from Scratch</title>
 
 <style>
 :root {
@@ -174,20 +174,20 @@ th { background: var(--cp-surface-soft); color: var(--cp-text); }
 
 <div class="wrapper">
   <nav class="navbar">
-    <a href="lesson-05-guardrails.html"><span data-lang="en">← Lesson 5</span><span data-lang="pt">← Lição 5</span></a>
-    <span class="current"><span data-lang="en">Lesson 6</span><span data-lang="pt">Lição 6</span></span>
+    <a href="lesson-06-guardrails.html"><span data-lang="en">← Lesson 6</span><span data-lang="pt">← Lição 6</span></a>
+    <span class="current"><span data-lang="en">Lesson 7</span><span data-lang="pt">Lição 7</span></span>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="lang-switcher" id="langSwitcher">
         <button data-set-lang="en">EN</button>
         <button data-set-lang="pt">PT</button>
       </div>
-      <a href="lesson-07-orchestrator.html"><span data-lang="en">Lesson 7 →</span><span data-lang="pt">Lição 7 →</span></a>
+      <a href="lesson-08-orchestrator.html"><span data-lang="en">Lesson 8 →</span><span data-lang="pt">Lição 8 →</span></a>
     </div>
   </nav>
 
   <section class="hero">
     <div class="kicker"><span data-lang="en">Advanced · Human Oversight</span><span data-lang="pt">Avançado · Supervisão Humana</span></div>
-    <h1><span data-lang="en">Lesson 6: Human-in-the-Loop Approval</span><span data-lang="pt">Lição 6: Aprovação Human-in-the-Loop</span></h1>
+    <h1><span data-lang="en">Lesson 7: Human-in-the-Loop Approval</span><span data-lang="pt">Lição 7: Aprovação Human-in-the-Loop</span></h1>
 
 <div style="background:var(--cp-surface-soft);border:1px solid var(--cp-border);border-radius:0.625rem;padding:10px 16px;margin:16px 0 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="font-size:0.85rem;color:var(--cp-text-muted);font-weight:600;"><span data-lang="en">View source:</span><span data-lang="pt">Ver código:</span></span><a href="https://github.com/paulocavalin/agentic-ai-tutorial/blob/main/examples/hitl_agent.py" target="_blank" style="color:var(--cp-link);text-decoration:none;font-family:Consolas,monospace;font-size:0.85rem;">📄 hitl_agent.py</a></div>
     <p class="lead"><span data-lang="en">Autonomy is useful until the agent can delete, archive, or mutate something expensive. <span class="inline-code">examples/hitl_agent.py</span> shows a practical checkpoint pattern: let the agent reason freely, but force human approval right before destructive tool calls.</span><span data-lang="pt">Autonomia é útil até o agent poder apagar, arquivar ou alterar algo caro. <span class="inline-code">examples/hitl_agent.py</span> mostra um padrão prático de checkpoint: deixe o agent raciocinar livremente, mas force aprovação humana logo antes de chamadas destrutivas de tool.</span></p>
@@ -198,7 +198,7 @@ th { background: var(--cp-surface-soft); color: var(--cp-text); }
       <li><span data-lang="en">How to wrap a registry so destructive tools pause for confirmation.</span><span data-lang="pt">Como envolver um registry para que tools destrutivas parem para confirmação.</span></li>
       <li><span data-lang="en">How the agent behaves when approval is denied.</span><span data-lang="pt">Como o agent se comporta quando a aprovação é negada.</span></li>
     </ul>
-    <p class="note"><strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <span data-lang="en">Lessons 1 and 2 explain tool schemas and registries. Lesson 7 is especially helpful because HITL is another wrapper pattern around the same underlying Agent loop.</span><span data-lang="pt">As Lições 1 e 2 explicam schemas e registries de tool. A Lição 7 é especialmente útil porque HITL é outro padrão de wrapper em volta do mesmo loop base do Agent.</span></p>
+    <p class="note"><strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <span data-lang="en">Lessons 1 and 2 explain tool schemas and registries. Lesson 8 is especially helpful because HITL is another wrapper pattern around the same underlying Agent loop.</span><span data-lang="pt">As Lições 1 e 2 explicam schemas e registries de tool. A Lição 8 é especialmente útil porque HITL é outro padrão de wrapper em volta do mesmo loop base do Agent.</span></p>
   </section>
 
   <section class="section">
@@ -365,9 +365,9 @@ python examples/hitl_agent.py --prompt "Delete old backup files" --trace
   </section>
 
   <nav class="navbar">
-    <a href="lesson-05-guardrails.html"><span data-lang="en">← Lesson 5</span><span data-lang="pt">← Lição 5</span></a>
-    <span class="current"><span data-lang="en">Lesson 6</span><span data-lang="pt">Lição 6</span></span>
-    <a href="lesson-07-orchestrator.html"><span data-lang="en">Lesson 7 →</span><span data-lang="pt">Lição 7 →</span></a>
+    <a href="lesson-06-guardrails.html"><span data-lang="en">← Lesson 6</span><span data-lang="pt">← Lição 6</span></a>
+    <span class="current"><span data-lang="en">Lesson 7</span><span data-lang="pt">Lição 7</span></span>
+    <a href="lesson-08-orchestrator.html"><span data-lang="en">Lesson 8 →</span><span data-lang="pt">Lição 8 →</span></a>
   </nav>
   <div class="footer"><span data-lang="en">SimpleAgent Tutorial · Advanced lesson 8</span><span data-lang="pt">Tutorial SimpleAgent · Lição avançada 8</span></div>
 </div>

@@ -18,7 +18,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lesson 5: Guardrails — Input, Tool & Output Safety — AI Agents from Scratch</title>
+<title>Lesson 6: Guardrails — Input, Tool & Output Safety — AI Agents from Scratch</title>
 
 <style>
 :root {
@@ -174,20 +174,20 @@ th { background: var(--cp-surface-soft); color: var(--cp-text); }
 
 <div class="wrapper">
   <nav class="navbar">
-    <a href="lesson-04-mcp-custom.html"><span data-lang="en">← Lesson 4</span><span data-lang="pt">← Lição 4</span></a>
-    <span class="current"><span data-lang="en">Lesson 5</span><span data-lang="pt">Lição 5</span></span>
+    <a href="lesson-05-mcp-http.html"><span data-lang="en">← Lesson 5</span><span data-lang="pt">← Lição 5</span></a>
+    <span class="current"><span data-lang="en">Lesson 6</span><span data-lang="pt">Lição 6</span></span>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="lang-switcher" id="langSwitcher">
         <button data-set-lang="en">EN</button>
         <button data-set-lang="pt">PT</button>
       </div>
-      <a href="lesson-06-hitl.html"><span data-lang="en">Lesson 6 →</span><span data-lang="pt">Lição 6 →</span></a>
+      <a href="lesson-07-hitl.html"><span data-lang="en">Lesson 7 →</span><span data-lang="pt">Lição 7 →</span></a>
     </div>
   </nav>
 
   <section class="hero">
     <div class="kicker"><span data-lang="en">Advanced · Safety</span><span data-lang="pt">Avançado · Segurança</span></div>
-    <h1><span data-lang="en">Lesson 5: Guardrails — Input, Tool &amp; Output Safety</span><span data-lang="pt">Lição 5: Guardrails — Segurança de Input, Tool e Output</span></h1>
+    <h1><span data-lang="en">Lesson 6: Guardrails — Input, Tool &amp; Output Safety</span><span data-lang="pt">Lição 6: Guardrails — Segurança de Input, Tool e Output</span></h1>
 
 <div style="background:var(--cp-surface-soft);border:1px solid var(--cp-border);border-radius:0.625rem;padding:10px 16px;margin:16px 0 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="font-size:0.85rem;color:var(--cp-text-muted);font-weight:600;"><span data-lang="en">View source:</span><span data-lang="pt">Ver código:</span></span><a href="https://github.com/paulocavalin/agentic-ai-tutorial/blob/main/examples/guardrails_agent.py" target="_blank" style="color:var(--cp-link);text-decoration:none;font-family:Consolas,monospace;font-size:0.85rem;">📄 guardrails_agent.py</a></div>
     <p class="lead"><span data-lang="en">This lesson turns the Lesson 2 search agent into a defense-in-depth pipeline. Instead of trusting the prompt, the fetched page, and the final answer equally, <span class="inline-code">examples/guardrails_agent.py</span> adds three checkpoints around the same core agent loop.</span><span data-lang="pt">Esta lição transforma o agent de busca da Lição 2 em um pipeline de defense-in-depth. Em vez de confiar igualmente no prompt, na página buscada e na resposta final, <span class="inline-code">examples/guardrails_agent.py</span> adiciona três checkpoints ao redor do mesmo loop central do agent.</span></p>
@@ -249,7 +249,7 @@ def check_input(client: OllamaClient, message: str, trace: bool) -&gt; InputVerd
 
   <section class="section">
     <h2><span data-lang="en">Layer 2: prompt injection detection in tool outputs</span><span data-lang="pt">Camada 2: detecção de prompt injection nas saídas de tools</span></h2>
-    <p><span data-lang="en">Lesson 2 trusted <span class="inline-code">web_fetch()</span> and fed its content directly into the agent loop. Lesson 7 assumes fetched text is untrusted. It scans every line with <span class="inline-code">_INJECTION_PATTERNS</span> before the result goes back to the model.</span><span data-lang="pt">A Lição 2 confiava em <span class="inline-code">web_fetch()</span> e jogava seu conteúdo direto no loop do agent. A Lição 7 assume que texto buscado não é confiável. Ela varre cada linha com <span class="inline-code">_INJECTION_PATTERNS</span> antes que o resultado volte para o modelo.</span></p>
+    <p><span data-lang="en">Lesson 2 trusted <span class="inline-code">web_fetch()</span> and fed its content directly into the agent loop. Lesson 8 assumes fetched text is untrusted. It scans every line with <span class="inline-code">_INJECTION_PATTERNS</span> before the result goes back to the model.</span><span data-lang="pt">A Lição 2 confiava em <span class="inline-code">web_fetch()</span> e jogava seu conteúdo direto no loop do agent. A Lição 8 assume que texto buscado não é confiável. Ela varre cada linha com <span class="inline-code">_INJECTION_PATTERNS</span> antes que o resultado volte para o modelo.</span></p>
     <pre><code>_INJECTION_PATTERNS = [
     re.compile(r"ignore\s+(all\s+)?previous\s+instructions?", re.IGNORECASE),
     re.compile(r"reveal\s+.{0,40}(system\s+prompt|api.?key|password|secret)", re.IGNORECASE),
@@ -347,7 +347,7 @@ python examples/guardrails_agent.py --skip-output-guardrail --prompt "..."
   </section>
 
   <section class="section">
-    <h2><span data-lang="en">How Lesson 7 extends Lesson 2</span><span data-lang="pt">Como a Lição 7 estende a Lição 2</span></h2>
+    <h2><span data-lang="en">How Lesson 8 extends Lesson 2</span><span data-lang="pt">Como a Lição 8 estende a Lição 2</span></h2>
     <p><span data-lang="en">Conceptually, this file is a hardened version of the research agent:</span><span data-lang="pt">Conceitualmente, este arquivo é uma versão endurecida do agent de pesquisa:</span></p>
     <ul>
       <li><strong><span data-lang="en">Same foundation:</span><span data-lang="pt">Mesma base:</span></strong> <span data-lang="en">identical Agent loop, tool schemas, and web research task.</span><span data-lang="pt">mesmo loop do Agent, mesmos schemas de tool e mesma tarefa de pesquisa web.</span></li>
@@ -355,7 +355,7 @@ python examples/guardrails_agent.py --skip-output-guardrail --prompt "..."
       <li><strong><span data-lang="en">New tool wrapper:</span><span data-lang="pt">Novo wrapper de tool:</span></strong> <span data-lang="en">fetched content is sanitized before the LLM reads it.</span><span data-lang="pt">o conteúdo buscado é sanitizado antes de o LLM lê-lo.</span></li>
       <li><strong><span data-lang="en">New post-check:</span><span data-lang="pt">Novo pós-check:</span></strong> <span data-lang="en">the final answer is redacted before it is printed.</span><span data-lang="pt">a resposta final é redigida antes de ser impressa.</span></li>
     </ul>
-    <p><span data-lang="en">If Lesson 2 taught you how an agent uses tools, Lesson 7 teaches you where to put trust boundaries around that same behavior.</span><span data-lang="pt">Se a Lição 2 ensinou como um agent usa tools, a Lição 7 ensina onde colocar fronteiras de confiança em volta desse mesmo comportamento.</span></p>
+    <p><span data-lang="en">If Lesson 2 taught you how an agent uses tools, Lesson 8 teaches you where to put trust boundaries around that same behavior.</span><span data-lang="pt">Se a Lição 2 ensinou como um agent usa tools, a Lição 8 ensina onde colocar fronteiras de confiança em volta desse mesmo comportamento.</span></p>
   </section>
 
   <section class="try-it">
@@ -365,9 +365,9 @@ python examples/guardrails_agent.py --skip-output-guardrail --prompt "..."
   </section>
 
   <nav class="navbar">
-    <a href="lesson-04-mcp-custom.html"><span data-lang="en">← Lesson 4</span><span data-lang="pt">← Lição 4</span></a>
-    <span class="current"><span data-lang="en">Lesson 5</span><span data-lang="pt">Lição 5</span></span>
-    <a href="lesson-06-hitl.html"><span data-lang="en">Lesson 6 →</span><span data-lang="pt">Lição 6 →</span></a>
+    <a href="lesson-05-mcp-http.html"><span data-lang="en">← Lesson 5</span><span data-lang="pt">← Lição 5</span></a>
+    <span class="current"><span data-lang="en">Lesson 6</span><span data-lang="pt">Lição 6</span></span>
+    <a href="lesson-07-hitl.html"><span data-lang="en">Lesson 7 →</span><span data-lang="pt">Lição 7 →</span></a>
   </nav>
   <div class="footer"><span data-lang="en">SimpleAgent Tutorial · Advanced lesson 7</span><span data-lang="pt">Tutorial SimpleAgent · Lição avançada 7</span></div>
 </div>
