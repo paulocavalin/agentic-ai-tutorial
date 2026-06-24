@@ -3,6 +3,9 @@
 CLI tool-calling agents using local [Ollama](https://ollama.com/) inference.  
 Default model: **gemma4:12b** via `http://localhost:11434/v1`.
 
+> 📖 **[Open the Tutorial](https://paulocavalin.github.io/agentic-ai-tutorial/)** — A progressive, bilingual (EN/PT) guide covering all examples.
+
+
 ## Directory Structure
 
 ```
