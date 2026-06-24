@@ -276,7 +276,7 @@ def main() -> None:
             )
             print("\nFinal answer:")
             print_final_output(
-                "Não consigo processar essa solicitação. Se você tiver uma dúvida legítima, pode me perguntar normalmente.",
+                "I cannot process this request. If you have a legitimate question, feel free to ask normally.",
                 render_markdown=False,
             )
             return

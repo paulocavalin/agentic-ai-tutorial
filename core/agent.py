@@ -106,7 +106,7 @@ class Agent:
             self._trace_print("final_response", final_assistant_content)
             return final_assistant_content
 
-        fallback = "Nao consegui concluir em tempo habil. Tente novamente com um prompt mais especifico."
+        fallback = "Could not complete in time. Try again with a more specific prompt."
         self.messages.append({"role": "assistant", "content": fallback})
         self._trace_print("fallback", fallback)
         return fallback

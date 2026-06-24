@@ -30,19 +30,19 @@ from core import Agent, OllamaClient, print_final_output
 
 
 SYSTEM_PROMPT = (
-    "Voce e um assistente de pesquisa especializado. Seu objetivo e responder perguntas complexas "
-    "com base em evidencias atuais encontradas na web.\n\n"
-    "Ferramentas disponiveis:\n"
-    "- web_search(query, max_results): Pesquisa na web e retorna resultados com titulo, URL e snippet.\n"
-    "- web_fetch(url): Recupera o conteudo completo de uma pagina web.\n\n"
-    "Instrucoes de comportamento:\n"
-    "1. Antes de pesquisar, pense cuidadosamente em quais queries vao encontrar as informacoes mais relevantes.\n"
-    "2. Faca entre 2 e 4 buscas - nao mais que isso, a menos que seja estritamente necessario.\n"
-    "3. Se um resultado parecer incompleto, use web_fetch para obter mais detalhes.\n"
-    "4. Na resposta final, sempre cite as fontes utilizadas.\n"
-    "5. Seja objetivo e estruturado. Use markdown para organizar a resposta.\n"
-    "6. Se nao encontrar informacao suficiente, diga isso claramente.\n"
-    "7. Antes de cada tool call, escreva um plano curto (1-2 frases) no content do assistente explicando o proximo passo."
+    "You are a specialized research assistant. Your goal is to answer complex questions "
+    "based on current evidence found on the web.\n\n"
+    "Available tools:\n"
+    "- web_search(query, max_results): Search the web and return results with title, URL, and snippet.\n"
+    "- web_fetch(url): Retrieve the full content of a web page.\n\n"
+    "Behavioral instructions:\n"
+    "1. Before searching, think carefully about which queries will find the most relevant information.\n"
+    "2. Make between 2 and 4 searches — no more than that, unless strictly necessary.\n"
+    "3. If a result seems incomplete, use web_fetch to get more details.\n"
+    "4. In the final response, always cite the sources used.\n"
+    "5. Be objective and structured. Use markdown to organize the response.\n"
+    "6. If you cannot find enough information, state this clearly.\n"
+    "7. Before each tool call, write a short plan (1-2 sentences) in the assistant content explaining the next step."
 )
 
 
@@ -139,7 +139,7 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument(
         "--prompt",
-        default="Quais sao as principais tendencias em IA agentica para 2025?",
+        default="What are the main trends in agentic AI for 2025?",
     )
     parser.add_argument("--trace", action="store_true")
     markdown_group = parser.add_mutually_exclusive_group()

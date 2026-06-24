@@ -59,7 +59,7 @@ def delete_files(bucket: str, files: List[str]) -> Dict[str, Any]:
         "count": len(files),
         "bucket": bucket,
         "status": "success",
-        "note": "[SIMULAÇÃO] Nenhum arquivo real foi deletado.",
+        "note": "[SIMULATION] No files were actually deleted.",
     }
 
 
@@ -71,7 +71,7 @@ def archive_to_glacier(bucket: str, files: List[str]) -> Dict[str, Any]:
         "new_storage_class": "GLACIER",
         "estimated_cost_per_gb_month": 0.004,
         "retrieval_time_hours": "3-5",
-        "note": "[SIMULAÇÃO] Nenhum arquivo real foi movido.",
+        "note": "[SIMULATION] No files were actually moved.",
     }
 
 
@@ -153,15 +153,15 @@ def _format_checkpoint(tool_name: str, args: Dict[str, Any]) -> str:
     lines = [
         "",
         "╔══════════════════════════════════════════════════════════════╗",
-        "║        ⚠  APROVAÇÃO NECESSÁRIA — AÇÃO DESTRUTIVA  ⚠         ║",
+        "║       ⚠  APPROVAL REQUIRED — DESTRUCTIVE ACTION  ⚠         ║",
         "╚══════════════════════════════════════════════════════════════╝",
-        f"  Ferramenta : {tool_name}",
-        f"  Argumentos : {json.dumps(args, ensure_ascii=False, indent=4)}",
+        f"  Tool      : {tool_name}",
+        f"  Arguments : {json.dumps(args, ensure_ascii=False, indent=4)}",
         "",
-        "  Esta ação é irreversível ou de alto impacto.",
-        "  Revise os argumentos acima antes de aprovar.",
+        "  This action is irreversible or high-impact.",
+        "  Review the arguments above before approving.",
         "",
-        "  [A] Aprovar   [N] Negar   [D] Detalhes da ferramenta",
+        "  [A] Approve   [N] Deny   [D] Tool details",
         "──────────────────────────────────────────────────────────────",
     ]
     return "\n".join(lines)
@@ -172,26 +172,26 @@ def _ask_approval(tool_name: str, args: Dict[str, Any], auto_approve: bool) -> T
     print(_format_checkpoint(tool_name, args))
 
     if auto_approve:
-        print("  [AUTO-APPROVE] Aprovação automática ativada. Continuando.\n")
+        print("  [AUTO-APPROVE] Automatic approval enabled. Proceeding.\n")
         return True, "auto-approved"
 
     while True:
         try:
-            choice = input("  Sua decisão [a/N]: ").strip().lower()
+            choice = input("  Your decision [a/N]: ").strip().lower()
         except (EOFError, KeyboardInterrupt):
-            print("\n  Interrompido pelo operador.")
+            print("\n  Interrupted by operator.")
             return False, "interrupted"
 
         if choice in ("a", "s", "y", "sim", "yes"):
             return True, ""
-        elif choice in ("n", "no", "nao", "não", ""):
+        elif choice in ("n", "no", ""):
             try:
-                reason = input("  Motivo (opcional): ").strip()
+                reason = input("  Reason (optional): ").strip()
             except (EOFError, KeyboardInterrupt):
                 reason = ""
             return False, reason or "rejected by operator"
         elif choice == "d":
-            print(f"\n  Documentação de '{tool_name}':")
+            print(f"\n  Documentation for '{tool_name}':")
             schemas = {"delete_files": delete_files_schema, "archive_to_glacier": archive_to_glacier_schema}
             if tool_name in schemas:
                 desc = schemas[tool_name]["function"]["description"]
@@ -201,7 +201,7 @@ def _ask_approval(tool_name: str, args: Dict[str, Any], auto_approve: bool) -> T
                     print(f"    {k}: {v.get('description', '')}")
             print()
         else:
-            print("  Responda 'a' para aprovar ou 'n' para negar.")
+            print("  Enter 'a' to approve or 'n' to deny.")
 
 
 def make_guarded_registry(base_registry: Dict, auto_approve: bool, trace: bool) -> Dict:
@@ -213,7 +213,7 @@ def make_guarded_registry(base_registry: Dict, auto_approve: bool, trace: bool) 
                 def wrapper(**kwargs):
                     approved, reason = _ask_approval(name_, kwargs, auto_approve)
                     if not approved:
-                        print(f"\n  ❌ Operação '{name_}' negada: {reason}\n")
+                        print(f"\n  ❌ Operation '{name_}' denied: {reason}\n")
                         return {
                             "status": "denied",
                             "tool": name_,
@@ -231,17 +231,16 @@ def make_guarded_registry(base_registry: Dict, auto_approve: bool, trace: bool) 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """Você é um agente de automação de infraestrutura cloud.
+SYSTEM_PROMPT = """You are a cloud infrastructure automation agent.
 
-Você tem acesso a ferramentas para listar, inspecionar e modificar recursos.
+You have access to tools for listing, inspecting, and modifying resources.
 
-REGRA CRÍTICA: As ferramentas marcadas como [DESTRUTIVA] requerem aprovação humana.
-O sistema de aprovação já está integrado — quando você chamar uma ferramenta destrutiva,
-o operador será consultado automaticamente. Você não precisa pedir permissão manualmente.
+CRITICAL RULE: Tools marked as [DESTRUCTIVE] require human approval.
+The approval system is already integrated — when you call a destructive tool,
+the operator will be consulted automatically. You do not need to ask for permission manually.
 
-Após uma operação negada, sugira alternativas viáveis.
-Seja objetivo, forneça números concretos (tamanho em GB, custos estimados).
-Responda em português.
+After a denied operation, suggest viable alternatives.
+Be objective, provide concrete numbers (size in GB, estimated costs).
 """
 
 
@@ -254,7 +253,7 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument(
         "--prompt",
-        default="Preciso liberar espaço no bucket s3://prod-backups. Delete backups com mais de 90 dias.",
+        default="I need to free up space in the bucket s3://prod-backups. Delete backups older than 90 days.",
     )
     parser.add_argument("--trace", action="store_true")
     parser.add_argument("--auto-approve", action="store_true", help="Auto-approve all destructive actions.")
@@ -276,7 +275,7 @@ def main() -> None:
 
     print("\n=== Human-in-the-Loop Infrastructure Agent ===")
     if args.auto_approve:
-        print("[MODO AUTO-APPROVE: aprovações automáticas habilitadas]")
+        print("[AUTO-APPROVE MODE: automatic approvals enabled]")
 
     agent = Agent(
         client=client,
