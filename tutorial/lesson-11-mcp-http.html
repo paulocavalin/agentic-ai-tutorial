@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 11: MCP over HTTP — AI Agents from Scratch</title>
+
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+code, pre { font-family: Consolas, "Courier New", Courier, monospace; }
+.wrapper { max-width: 980px; margin: 0 auto; padding: 24px; }
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 0 0 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--cp-shadow);
+}
+.navbar a { color: var(--cp-link); text-decoration: none; font-weight: 600; }
+.navbar .current { color: var(--cp-text-muted); font-size: 0.95rem; font-weight: 600; }
+.hero, .section, .try-it {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.hero h1 { margin: 0 0 12px; font-size: 2.1rem; line-height: 1.2; }
+.hero p, .section p, .section li, .try-it p, .note, .table-wrap, .diagram-step { color: var(--cp-text-muted); }
+.lead { font-size: 1.02rem; }
+.kicker {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+  color: var(--cp-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+.card { padding: 16px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-bg-elevated); }
+.card h3, .section h2, .section h3, .try-it h2 { margin-top: 0; color: var(--cp-text); }
+.section h2 { margin-bottom: 12px; font-size: 1.45rem; }
+.section h3 { margin-bottom: 8px; font-size: 1.05rem; }
+.note { padding: 12px 14px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface-soft); }
+.key-insight {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--cp-border);
+  border-left: 6px solid var(--cp-accent);
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+}
+.key-insight strong { color: var(--cp-text); }
+pre {
+  margin: 16px 0;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--cp-text);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px; border: 1px solid var(--cp-border); text-align: left; vertical-align: top; }
+th { background: var(--cp-surface-soft); color: var(--cp-text); }
+.diagram { display: grid; gap: 12px; margin: 16px 0; }
+.diagram-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; align-items: stretch; }
+.diagram-step { padding: 14px; border: 1px solid var(--cp-border-strong); border-radius: 0.625rem; background: var(--cp-bg-elevated); text-align: center; }
+.arrow { text-align: center; color: var(--cp-text-soft); font-weight: 700; }
+.inline-code { display: inline-block; padding: 2px 8px; border-radius: 0.625rem; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text); }
+.footer { padding: 20px 0 8px; color: var(--cp-text-soft); text-align: center; font-size: 0.9rem; }
+@media (max-width: 720px) {
+  .wrapper { padding: 16px; }
+  .navbar { flex-direction: column; align-items: flex-start; }
+  .hero h1 { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+<div style="padding:8px 16px;background:var(--cp-surface-soft);border-bottom:1px solid var(--cp-border);font-size:0.82rem;">
+  <a href="index.html" style="color:var(--cp-link);text-decoration:none;">🏠 <span data-lang="en">AI Agents from Scratch</span><span data-lang="pt">AI Agents do Zero</span></a>
+</div>
+
+<div class="wrapper">
+  <nav class="navbar">
+    <a href="lesson-10-memory.html"><span data-lang="en">← Lesson 10</span><span data-lang="pt">← Lição 10</span></a>
+    <span class="current"><span data-lang="en">Lesson 11</span><span data-lang="pt">Lição 11</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="lang-switcher" id="langSwitcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="index.html"><span data-lang="en">All Lessons →</span><span data-lang="pt">Todas as Lições →</span></a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="kicker"><span data-lang="en">Advanced · MCP</span><span data-lang="pt">Avançado · MCP</span></div>
+    <h1><span data-lang="en">Lesson 11: MCP over HTTP</span><span data-lang="pt">Lição 11: MCP sobre HTTP</span></h1>
+
+<div style="background:var(--cp-surface-soft);border:1px solid var(--cp-border);border-radius:0.625rem;padding:10px 16px;margin:16px 0 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span style="font-size:0.85rem;color:var(--cp-text-muted);font-weight:600;"><span data-lang="en">View source:</span><span data-lang="pt">Ver código:</span></span><a href="https://github.com/paulocavalin/agentic-ai-tutorial/blob/main/examples/mcp_http_agent.py" target="_blank" style="color:var(--cp-link);text-decoration:none;font-family:Consolas,monospace;font-size:0.85rem;">📄 <span data-lang="en">mcp_http_agent.py</span><span data-lang="pt">mcp_http_agent.py</span></a> <a href="https://github.com/paulocavalin/agentic-ai-tutorial/blob/main/mcp_servers/notes_http_server.py" target="_blank" style="color:var(--cp-link);text-decoration:none;font-family:Consolas,monospace;font-size:0.85rem;">📄 <span data-lang="en">notes_http_server.py</span><span data-lang="pt">notes_http_server.py</span></a></div>
+    <p class="lead"><span data-lang="en">Lessons 3 and 4 used MCP over <span class="inline-code">stdio</span>, where the agent launches the server as a local subprocess. Lesson 11 keeps the same tool contract but moves the transport to HTTP, so the server can run independently and multiple clients can connect to it over the network.</span><span data-lang="pt">As Lições 3 e 4 usaram MCP sobre <span class="inline-code">stdio</span>, em que o agent inicia o servidor como um subprocesso local. A Lição 11 mantém o mesmo contrato de tools, mas move o transporte para HTTP, para que o servidor possa rodar de forma independente e vários clientes possam se conectar a ele pela rede.</span></p>
+    <h3><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h3>
+    <ul>
+      <li><span data-lang="en">Why HTTP transport matters for remote tools and multi-client architectures.</span><span data-lang="pt">Por que o transporte HTTP importa para tools remotas e arquiteturas com múltiplos clientes.</span></li>
+      <li><span data-lang="en">How <span class="inline-code">notes_http_server.py</span> exposes CRUD note tools with FastMCP.</span><span data-lang="pt">Como <span class="inline-code">notes_http_server.py</span> expõe tools CRUD de notas com FastMCP.</span></li>
+      <li><span data-lang="en">How <span class="inline-code">MCPAgentClient</span> now supports both stdio and HTTP with one small abstraction.</span><span data-lang="pt">Como <span class="inline-code">MCPAgentClient</span> agora suporta stdio e HTTP com uma abstração pequena.</span></li>
+      <li><span data-lang="en">Why the consuming agent stays almost identical even when the transport changes.</span><span data-lang="pt">Por que o agent consumidor continua quase idêntico mesmo quando o transporte muda.</span></li>
+    </ul>
+    <p class="note"><strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <span data-lang="en">Read Lessons 3 and 4 first. This lesson makes more sense once you already understand MCP tool discovery and the stdio-based client pattern.</span><span data-lang="pt">Leia as Lições 3 e 4 primeiro. Esta lição faz mais sentido quando você já entende discovery de tools MCP e o padrão de cliente baseado em stdio.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Why switch from stdio to HTTP?</span><span data-lang="pt">Por que mudar de stdio para HTTP?</span></h2>
+    <p><span data-lang="en">With stdio, the agent process starts the MCP server and communicates through local pipes. That is simple and great for local demos, but it assumes both processes live on the same machine. HTTP breaks that coupling.</span><span data-lang="pt">Com stdio, o processo do agent inicia o servidor MCP e se comunica por pipes locais. Isso é simples e ótimo para demos locais, mas assume que ambos os processos vivem na mesma máquina. HTTP quebra esse acoplamento.</span></p>
+    <div class="diagram">
+      <div class="diagram-row">
+        <div class="diagram-step"><strong><span data-lang="en">Remote Server</span><span data-lang="pt">Servidor Remoto</span></strong><br><span data-lang="en">Runs anywhere</span><span data-lang="pt">Roda em qualquer lugar</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">HTTP Transport</span><span data-lang="pt">Transporte HTTP</span></strong><br><span data-lang="en">Network connection</span><span data-lang="pt">Conexão de rede</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Many Clients</span><span data-lang="pt">Muitos Clientes</span></strong><br><span data-lang="en">One server, multiple agents</span><span data-lang="pt">Um servidor, vários agents</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Microservice Fit</span><span data-lang="pt">Boa para Microservices</span></strong><br><span data-lang="en">Deploy and scale separately</span><span data-lang="pt">Deploy e escala separados</span></div>
+      </div>
+    </div>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">MCP standardizes the tool protocol, not the process model. Once your client understands MCP, the same agent can talk to local subprocesses or remote HTTP services.</span><span data-lang="pt">MCP padroniza o protocolo de tools, não o modelo de processo. Depois que seu cliente entende MCP, o mesmo agent pode falar com subprocessos locais ou serviços HTTP remotos.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The server: FastMCP with Streamable HTTP transport</span><span data-lang="pt">O servidor: FastMCP com transporte Streamable HTTP</span></h2>
+    <p><span data-lang="en">The file <span class="inline-code">mcp_servers/notes_http_server.py</span> defines a small notes service. The tools are ordinary Python functions decorated with <span class="inline-code">@mcp.tool()</span>, just like earlier lessons. The new part is the transport at startup.</span><span data-lang="pt">O arquivo <span class="inline-code">mcp_servers/notes_http_server.py</span> define um pequeno serviço de notas. As tools são funções Python comuns decoradas com <span class="inline-code">@mcp.tool()</span>, assim como nas lições anteriores. A parte nova é o transporte na inicialização.</span></p>
+    <pre><code>from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Notes Server")
+
+@mcp.tool()
+def create_note(title: str, content: str) -&gt; str:
+    """Create a new note. Returns the note ID."""
+    notes = _load_notes()
+    note_id = str(uuid.uuid4())[:8]
+    notes[note_id] = {
+        "title": title,
+        "content": content,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    _save_notes(notes)
+    return f"Note created with ID: {note_id}"
+
+# Start with HTTP transport
+mcp.settings.port = 8000
+mcp.run(transport="streamable-http")
+</code></pre>
+    <p><span data-lang="en">Two details matter here. First, <span class="inline-code">transport="streamable-http"</span> tells FastMCP to expose the server over HTTP rather than stdio. Second, <span class="inline-code">mcp.settings.port</span> controls the listening port, which the example sets from CLI arguments before starting.</span><span data-lang="pt">Dois detalhes importam aqui. Primeiro, <span class="inline-code">transport="streamable-http"</span> diz ao FastMCP para expor o servidor por HTTP em vez de stdio. Segundo, <span class="inline-code">mcp.settings.port</span> controla a porta de escuta, que o exemplo define a partir de argumentos de linha de comando antes de iniciar.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">CRUD tools plus JSON persistence</span><span data-lang="pt">Tools CRUD com persistência em JSON</span></h2>
+    <p><span data-lang="en">The server exposes four note operations: <span class="inline-code">create_note</span>, <span class="inline-code">list_notes</span>, <span class="inline-code">get_note</span>, and <span class="inline-code">delete_note</span>. Underneath, it persists state to a local JSON file, so data survives between runs.</span><span data-lang="pt">O servidor expõe quatro operações de nota: <span class="inline-code">create_note</span>, <span class="inline-code">list_notes</span>, <span class="inline-code">get_note</span> e <span class="inline-code">delete_note</span>. Por baixo, ele persiste estado em um arquivo JSON local, então os dados sobrevivem entre execuções.</span></p>
+    <div class="lesson-grid">
+      <div class="card">
+        <h3><span data-lang="en">Create</span><span data-lang="pt">Create</span></h3>
+        <p><span data-lang="en"><span class="inline-code">create_note()</span> generates a short UUID, stores title, content, and timestamp, then saves the full dictionary back to disk.</span><span data-lang="pt"><span class="inline-code">create_note()</span> gera um UUID curto, salva título, conteúdo e timestamp, e então grava o dicionário completo em disco.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">List</span><span data-lang="pt">List</span></h3>
+        <p><span data-lang="en"><span class="inline-code">list_notes()</span> returns a readable summary with IDs and titles, which is ideal for follow-up lookups.</span><span data-lang="pt"><span class="inline-code">list_notes()</span> retorna um resumo legível com IDs e títulos, ideal para consultas posteriores.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">Read</span><span data-lang="pt">Read</span></h3>
+        <p><span data-lang="en"><span class="inline-code">get_note()</span> fetches the full record and formats the content for the agent.</span><span data-lang="pt"><span class="inline-code">get_note()</span> busca o registro completo e formata o conteúdo para o agent.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">Delete</span><span data-lang="pt">Delete</span></h3>
+        <p><span data-lang="en"><span class="inline-code">delete_note()</span> removes a note safely and confirms exactly what was deleted.</span><span data-lang="pt"><span class="inline-code">delete_note()</span> remove uma nota com segurança e confirma exatamente o que foi apagado.</span></p>
+      </div>
+    </div>
+    <pre><code>NOTES_FILE = Path("notes.json")
+
+def _load_notes() -&gt; dict:
+    if NOTES_FILE.exists():
+        return json.loads(NOTES_FILE.read_text(encoding="utf-8"))
+    return {}
+
+def _save_notes(notes: dict) -&gt; None:
+    NOTES_FILE.write_text(json.dumps(notes, indent=2, ensure_ascii=False), encoding="utf-8")
+</code></pre>
+    <p><span data-lang="en">This storage layer is intentionally simple. The important lesson is that transport and business logic are separate concerns: notes could later move to SQLite, Postgres, or a hosted database without changing how the agent calls the tools.</span><span data-lang="pt">Esta camada de armazenamento é intencionalmente simples. A lição importante é que transporte e lógica de negócio são preocupações separadas: as notas poderiam depois migrar para SQLite, Postgres ou um banco hospedado sem mudar a forma como o agent chama as tools.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The extended <span class="inline-code">MCPAgentClient</span></span><span data-lang="pt">O <span class="inline-code">MCPAgentClient</span> estendido</span></h2>
+    <p><span data-lang="en">From the agent's point of view, the biggest API change is tiny: lessons 3 and 4 passed <span class="inline-code">StdioServerParameters</span>, while this lesson passes a URL string. The client now accepts both.</span><span data-lang="pt">Do ponto de vista do agent, a maior mudança de API é mínima: as lições 3 e 4 passavam <span class="inline-code">StdioServerParameters</span>, enquanto esta lição passa uma string de URL. O cliente agora aceita ambos.</span></p>
+    <pre><code># Stdio (lessons 3-4)
+async with MCPAgentClient(StdioServerParameters(command="...")) as mcp:
+
+# HTTP (this lesson)
+async with MCPAgentClient("http://localhost:8000/mcp") as mcp:
+</code></pre>
+    <pre><code>class MCPAgentClient:
+    def __init__(self, server_params: Union[StdioServerParameters, str]) -&gt; None:
+        self.server_params = server_params
+
+    @property
+    def _is_http(self) -&gt; bool:
+        return isinstance(self.server_params, str)
+
+    async def __aenter__(self):
+        if self._is_http:
+            self._transport_context = streamablehttp_client(self.server_params)
+        else:
+            self._transport_context = stdio_client(self.server_params)
+        # ... rest is identical
+</code></pre>
+    <p><span data-lang="en">Internally, the HTTP branch uses <span class="inline-code">streamablehttp_client</span> from the MCP SDK. After that branch point, initialization, tool discovery, session setup, and adapter creation are the same as before.</span><span data-lang="pt">Internamente, o branch HTTP usa <span class="inline-code">streamablehttp_client</span> do SDK de MCP. Depois desse ponto de decisão, inicialização, discovery de tools, setup de sessão e criação de adapters são iguais aos de antes.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">This is good client design: transport selection happens in one place, while the rest of the agent integration remains transport-agnostic.</span><span data-lang="pt">Isto é um bom design de cliente: a seleção do transporte acontece em um único lugar, enquanto o resto da integração do agent permanece agnóstico ao transporte.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The agent is almost unchanged</span><span data-lang="pt">O agent está quase inalterado</span></h2>
+    <p><span data-lang="en">The file <span class="inline-code">examples/mcp_http_agent.py</span> looks very close to the Lesson 4 agent. It still creates an LLM client, opens an MCP context, converts discovered tools, builds an <span class="inline-code">Agent</span>, and runs the user prompt in a worker thread.</span><span data-lang="pt">O arquivo <span class="inline-code">examples/mcp_http_agent.py</span> parece muito com o agent da Lição 4. Ele ainda cria um cliente de LLM, abre um contexto MCP, converte as tools descobertas, monta um <span class="inline-code">Agent</span> e executa o prompt do usuário em uma thread de trabalho.</span></p>
+    <pre><code>from core import Agent, MCPAgentClient, OllamaClient
+
+async def main():
+    client = OllamaClient(model="gemma4:12b")
+
+    # Connect via HTTP — just pass the URL
+    async with MCPAgentClient("http://localhost:8000/mcp") as mcp:
+        loop = asyncio.get_running_loop()
+        tools, registry = mcp.get_tools(loop)
+
+        agent = Agent(client=client, tools=tools, tool_registry=registry, system=SYSTEM_PROMPT)
+        result = await asyncio.to_thread(agent.execute, prompt)
+</code></pre>
+    <p><span data-lang="en">That similarity is the teaching goal. When tool access is abstracted behind MCP, your agent logic does not care whether the server lives in the same process tree or across the network.</span><span data-lang="pt">Essa semelhança é o objetivo pedagógico. Quando o acesso às tools é abstraído por MCP, sua lógica de agent não se importa se o servidor vive na mesma árvore de processos ou do outro lado da rede.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Running the example in two terminals</span><span data-lang="pt">Executando o exemplo em dois terminais</span></h2>
+    <p><span data-lang="en">Because the server is now independent, you start it first in one terminal and run the agent from another. That is the operational difference students should notice immediately.</span><span data-lang="pt">Como o servidor agora é independente, você o inicia primeiro em um terminal e roda o agent em outro. Essa é a diferença operacional que os alunos devem notar imediatamente.</span></p>
+    <pre><code># Terminal 1: start the MCP server
+python mcp_servers/notes_http_server.py
+
+# Terminal 2: run the agent
+python examples/mcp_http_agent.py --prompt "Create a note about Python decorators" --trace
+</code></pre>
+    <p><span data-lang="en">With tracing enabled, the output clearly shows the remote MCP connection and the tool call lifecycle:</span><span data-lang="pt">Com tracing habilitado, a saída mostra claramente a conexão MCP remota e o ciclo de vida da chamada de tool:</span></p>
+    <pre><code>[MCP] Connected to http://localhost:8000/mcp
+[MCP] Available tools: ['create_note', 'list_notes', 'get_note', 'delete_note']
+
+[TRACE] tool_call
+{"name": "create_note", "args": {"title": "Python Decorators", "content": "..."}}
+
+[TRACE] tool_result
+{"result": "Note created with ID: a3f2c1d8"}
+</code></pre>
+    <p><span data-lang="en">Notice what does <em>not</em> change: the agent still sees a set of MCP tools and uses them the same way. Only server startup and connection mode changed.</span><span data-lang="pt">Perceba o que <em>não</em> muda: o agent ainda enxerga um conjunto de tools MCP e as usa da mesma forma. Só mudaram a inicialização do servidor e o modo de conexão.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Key takeaways</span><span data-lang="pt">Principais aprendizados</span></h2>
+    <ul>
+      <li><span data-lang="en">HTTP transport lets MCP servers run remotely and serve more than one client.</span><span data-lang="pt">O transporte HTTP permite que servidores MCP rodem remotamente e atendam mais de um cliente.</span></li>
+      <li><span data-lang="en">The notes server keeps ordinary tool logic: CRUD functions plus a persistence layer.</span><span data-lang="pt">O servidor de notas mantém lógica de tool comum: funções CRUD mais uma camada de persistência.</span></li>
+      <li><span data-lang="en"><span class="inline-code">MCPAgentClient</span> changes only at the transport boundary, using <span class="inline-code">streamablehttp_client</span> for URLs.</span><span data-lang="pt"><span class="inline-code">MCPAgentClient</span> muda apenas na fronteira do transporte, usando <span class="inline-code">streamablehttp_client</span> para URLs.</span></li>
+      <li><span data-lang="en">Tool logic is decoupled from transport, so the same agent pattern works across stdio and HTTP.</span><span data-lang="pt">A lógica de tool é desacoplada do transporte, então o mesmo padrão de agent funciona em stdio e HTTP.</span></li>
+    </ul>
+    <div class="key-insight"><strong><span data-lang="en">Final Insight:</span><span data-lang="pt">Insight Final:</span></strong> <span data-lang="en">MCP becomes much more powerful once you stop thinking of tools as local subprocesses. Over HTTP, they can become reusable network services in a larger agent architecture.</span><span data-lang="pt">MCP fica muito mais poderoso quando você deixa de pensar em tools como subprocessos locais. Sobre HTTP, elas podem virar serviços de rede reutilizáveis em uma arquitetura maior de agents.</span></div>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Start the notes server, then ask the HTTP-based agent to create, list, and delete notes. You will see that the user-facing workflow feels the same even though the transport changed completely.</span><span data-lang="pt">Inicie o servidor de notas e depois peça ao agent baseado em HTTP para criar, listar e apagar notas. Você verá que o fluxo voltado ao usuário parece o mesmo, mesmo com a mudança completa de transporte.</span></p>
+    <pre><code>python examples/mcp_http_agent.py --prompt "Create a note titled 'Decorator Patterns' with examples of @staticmethod, @classmethod, and property." --trace</code></pre>
+  </section>
+
+  <nav class="navbar">
+    <a href="lesson-10-memory.html"><span data-lang="en">← Lesson 10</span><span data-lang="pt">← Lição 10</span></a>
+    <span class="current"><span data-lang="en">Lesson 11</span><span data-lang="pt">Lição 11</span></span>
+    <a href="index.html"><span data-lang="en">All Lessons →</span><span data-lang="pt">Todas as Lições →</span></a>
+  </nav>
+  <div class="footer"><span data-lang="en">AI Agents from Scratch · Advanced lesson 11</span><span data-lang="pt">AI Agents do Zero · Lição avançada 11</span></div>
+</div>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
