@@ -8,10 +8,11 @@ functions that bridge into the async MCP session.
 
 import asyncio
 import json
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 
 
 def _mcp_schema_to_openai(tool: types.Tool) -> Dict[str, Any]:
@@ -60,25 +61,43 @@ class MCPAgentClient:
     """
     Bridges an MCP server into the Agent's tool system.
 
+    Supports two transports:
+      - stdio: pass a StdioServerParameters instance
+      - HTTP:  pass a URL string (e.g. "http://localhost:8000/mcp")
+
     Usage (inside an async function):
-        async with MCPAgentClient(server_params) as mcp:
+        # Stdio transport
+        async with MCPAgentClient(StdioServerParameters(...)) as mcp:
             tools, registry = mcp.get_tools()
-            agent = Agent(client=llm_client, tools=tools, tool_registry=registry)
-            agent.execute("...")
+
+        # HTTP transport
+        async with MCPAgentClient("http://localhost:8000/mcp") as mcp:
+            tools, registry = mcp.get_tools()
     """
 
-    def __init__(self, server_params: StdioServerParameters) -> None:
+    def __init__(self, server_params: Union[StdioServerParameters, str]) -> None:
         self.server_params = server_params
         self._session: Optional[ClientSession] = None
         self._tools: List[types.Tool] = []
         self._read = None
         self._write = None
-        self._stdio_context = None
+        self._transport_context = None
         self._session_context = None
 
+    @property
+    def _is_http(self) -> bool:
+        return isinstance(self.server_params, str)
+
     async def __aenter__(self) -> "MCPAgentClient":
-        self._stdio_context = stdio_client(self.server_params)
-        self._read, self._write = await self._stdio_context.__aenter__()
+        if self._is_http:
+            self._transport_context = streamablehttp_client(self.server_params)
+        else:
+            self._transport_context = stdio_client(self.server_params)
+
+        result = await self._transport_context.__aenter__()
+        # streamablehttp_client yields (read, write, get_session_id)
+        # stdio_client yields (read, write)
+        self._read, self._write = result[0], result[1]
 
         self._session_context = ClientSession(self._read, self._write)
         self._session = await self._session_context.__aenter__()
@@ -92,8 +111,8 @@ class MCPAgentClient:
     async def __aexit__(self, *args) -> None:
         if self._session_context:
             await self._session_context.__aexit__(*args)
-        if self._stdio_context:
-            await self._stdio_context.__aexit__(*args)
+        if self._transport_context:
+            await self._transport_context.__aexit__(*args)
 
     def get_tools(self, loop: asyncio.AbstractEventLoop) -> Tuple[List[Dict[str, Any]], Dict[str, Callable[..., Any]]]:
         """

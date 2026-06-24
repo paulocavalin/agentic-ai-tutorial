@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 *.pyo
 mcp_servers/inventory.db
+notes.json
 .DS_Store
