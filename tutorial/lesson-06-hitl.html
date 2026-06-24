@@ -249,13 +249,12 @@ _DESTRUCTIVE_TOOLS = {"delete_files", "archive_to_glacier"}
     <pre><code>def _format_checkpoint(tool_name: str, args: Dict[str, Any]) -&gt; str:
     lines = [
         "╔══════════════════════════════════════════════════════════════╗",
-        "║        ⚠  APROVAÇÃO NECESSÁRIA — AÇÃO DESTRUTIVA  ⚠         ║",
-        f"  Ferramenta : {tool_name}",
-        f"  Argumentos : {json.dumps(args, ensure_ascii=False, indent=4)}",
-        "  [A] Aprovar   [N] Negar   [D] Detalhes da ferramenta",
+        "║       ⚠  APPROVAL REQUIRED — DESTRUCTIVE ACTION  ⚠         ║",
+        f"  Tool      : {tool_name}",
+        f"  Arguments : {json.dumps(args, ensure_ascii=False, indent=4)}",
+        "  [A] Approve   [N] Deny   [D] Tool details",
     ]
-    return "
-".join(lines)
+    return "\n".join(lines)
 </code></pre>
     <p><span data-lang="en">This is not just cosmetic. Good HITL checkpoints give the human enough context to make a decision quickly. “Approve delete?” is weak. “Approve deleting these exact eight files from this exact bucket?” is actionable.</span><span data-lang="pt">Isto não é só cosmético. Bons checkpoints de HITL dão contexto suficiente para o humano decidir rápido. “Aprovar delete?” é fraco. “Aprovar a exclusão destes oito arquivos exatos deste bucket exato?” é acionável.</span></p>
     <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">a checkpoint is part audit log, part UX. The better the summary, the less likely the human is to approve blindly.</span><span data-lang="pt">um checkpoint é parte audit log, parte UX. Quanto melhor o resumo, menor a chance de o humano aprovar no automático.</span></div>
@@ -268,11 +267,11 @@ _DESTRUCTIVE_TOOLS = {"delete_files", "archive_to_glacier"}
     print(_format_checkpoint(tool_name, args))
 
     if auto_approve:
-        print("[AUTO-APPROVE] Aprovação automática ativada.")
+        print("[AUTO-APPROVE] Automatic approval enabled.")
         return True, "auto-approved"
 
     while True:
-        choice = input("  Sua decisão [a/N]: ").strip().lower()
+        choice = input("  Your decision [a/N]: ").strip().lower()
         if choice in ("a", "s", "y", "sim", "yes"):
             return True, ""
         elif choice in ("n", "no", "nao", "não", ""):

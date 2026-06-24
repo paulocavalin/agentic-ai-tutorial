@@ -437,41 +437,28 @@ def web_search(query: str, max_results: int = 5) -> List[Dict[str, str]]:
 </p>
 
 <pre><code>SYSTEM_PROMPT = (
-    "Voce e um assistente de pesquisa especializado. Seu objetivo e responder "
-    "perguntas complexas com base em evidencias atuais encontradas na web.
-
-"
-    "Ferramentas disponiveis:
-"
-    "- web_search(query, max_results): Pesquisa na web...
-"
-    "- web_fetch(url): Recupera o conteudo completo de uma pagina web.
-
-"
-    "Instrucoes de comportamento:
-"
-    "1. Antes de pesquisar, pense cuidadosamente em quais queries vao "
-    "   encontrar as informacoes mais relevantes.
-"
-    "2. Faca entre 2 e 4 buscas - nao mais que isso.
-"
-    "3. Se um resultado parecer incompleto, use web_fetch para mais detalhes.
-"
-    "4. Na resposta final, sempre cite as fontes utilizadas.
-"
-    "5. Seja objetivo e estruturado. Use markdown.
-"
-    "6. Se nao encontrar informacao suficiente, diga isso claramente.
-"
-    "7. Antes de cada tool call, escreva um plano curto (1-2 frases) "
-    "   explicando o proximo passo."
+    "You are a specialized research assistant. Your goal is to answer complex "
+    "questions based on current evidence found on the web.\n\n"
+    "Available tools:\n"
+    "- web_search(query, max_results): Search the web and return results...\n"
+    "- web_fetch(url): Retrieve the full content of a web page.\n\n"
+    "Behavioral instructions:\n"
+    "1. Before searching, think carefully about which queries will find "
+    "   the most relevant information.\n"
+    "2. Make between 2 and 4 searches — no more than that.\n"
+    "3. If a result seems incomplete, use web_fetch for more details.\n"
+    "4. In the final response, always cite the sources used.\n"
+    "5. Be objective and structured. Use markdown.\n"
+    "6. If you cannot find enough information, state this clearly.\n"
+    "7. Before each tool call, write a short plan (1-2 sentences) "
+    "   explaining the next step."
 )</code></pre>
 
 <p class="annotation">
-  <span data-lang="en">The prompt is in Portuguese — this is an educational repo for Brazilian students.
-  The instructions work the same way in any language.</span>
-  <span data-lang="pt">O prompt está em português — este é um repositório educacional para estudantes brasileiros.
-  As instruções funcionam da mesma forma em qualquer idioma.</span>
+  <span data-lang="en">The system prompt acts as a behavioral specification — it constrains
+  how many searches to make, when to use web_fetch, and how to format the output.</span>
+  <span data-lang="pt">O system prompt age como uma especificação comportamental — ele restringe
+  quantas buscas fazer, quando usar web_fetch e como formatar a saída.</span>
 </p>
 
 <p><span data-lang="en">Let's break down what each instruction does:</span><span data-lang="pt">Vamos detalhar o que cada instrução faz:</span></p>
@@ -526,13 +513,13 @@ def web_search(query: str, max_results: int = 5) -> List[Dict[str, str]]:
 </p>
 
 <pre><code>[TRACE] assistant_plan
-"Vou pesquisar sobre as principais tendencias em IA agentica para 2025"
+"I'll search for the main trends in agentic AI for 2025"
 
 [TRACE] tool_execution
 {"name": "web_search", "args": {"query": "agentic AI trends 2025"}, ...}
 
 [TRACE] assistant_plan
-"O primeiro resultado parece promissor, vou buscar mais detalhes"
+"The first result looks promising, I'll fetch more details"
 
 [TRACE] tool_execution
 {"name": "web_fetch", "args": {"url": "https://..."}, ...}</code></pre>
