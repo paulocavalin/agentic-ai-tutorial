@@ -7,17 +7,8 @@ Default model: **gemma4:12b** via `http://localhost:11434/v1`.
 
 > ℹ️ **Origin & provenance.** This is a personal, educational refactor and
 > expansion of my earlier project
-> **[genai_resources](https://github.com/paulocavalin/genai_resources)**
-> (originally written and published **March–May 2026**, before my current
-> employment; see that repo's commit history for dates, and this repo's history,
-> which is linked back to it). The material was developed as part of my
-> long-standing work as a **learning facilitator for MIT Professional Education**
-> generative-AI courses. It teaches broad, publicly-documented
-> generative-AI and agent concepts using local open models, and contains **no
-> confidential or proprietary material**. It is an **independent personal
-> project**: the code and views here are my own, were developed on personal time
-> and equipment, and **do not represent my employer**. Not affiliated with,
-> endorsed by, or sponsored by any employer.
+> **[genai_resources](https://github.com/paulocavalin/genai_resources)**, as
+> part of my work as a learning facilitator for MIT PE AI-related courses.
 
 
 ## Directory Structure
