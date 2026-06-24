@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agents from Scratch — A Progressive Guide</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+header {
+  text-align: center;
+  padding: 64px 24px 48px;
+  border-bottom: 1px solid var(--cp-border);
+  margin-bottom: 48px;
+  position: relative;
+}
+
+header h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--cp-text);
+}
+
+header .subtitle {
+  font-size: 1.15rem;
+  color: var(--cp-text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.lang-switcher {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-core { background: var(--cp-accent-soft); color: var(--cp-accent); }
+.badge-intermediate { background: rgba(245, 158, 11, 0.12); color: var(--cp-warning); }
+.badge-advanced { background: rgba(22, 163, 74, 0.12); color: var(--cp-success); }
+
+.lessons-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.lesson-card {
+  display: block;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lesson-card:hover {
+  border-color: var(--cp-accent);
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+
+.lesson-card .lesson-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.lesson-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.lesson-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.lesson-card p {
+  color: var(--cp-text-muted);
+  font-size: 0.92rem;
+  margin-left: 44px;
+}
+
+.lesson-card .meta {
+  margin-left: 44px;
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.8rem;
+  color: var(--cp-text-soft);
+  background: var(--cp-surface-soft);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cp-text-muted);
+  margin-top: 40px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cp-border);
+}
+
+footer {
+  text-align: center;
+  padding: 32px 24px;
+  color: var(--cp-text-muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--cp-border);
+  margin-top: 48px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="lang-switcher" id="langSwitcher">
+    <button data-set-lang="en">EN</button>
+    <button data-set-lang="pt">PT</button>
+  </div>
+  <h1>🤖 <span data-lang="en">AI Agents from Scratch</span><span data-lang="pt">Agentes de IA do Zero</span></h1>
+  <p class="subtitle">
+    <span data-lang="en">A progressive guide — from a simple tool-calling loop to MCP-powered multi-server architectures.</span>
+    <span data-lang="pt">Um guia progressivo — de um loop simples de chamada de ferramentas até arquiteturas multi-servidor com MCP.</span>
+  </p>
+</header>
+
+<div class="container">
+
+  <p style="color: var(--cp-text-muted); margin-bottom: 8px; font-size: 0.95rem;">
+    <span data-lang="en">Each lesson builds on the previous one. Start at Lesson 1 to understand the core, then pick any topic that interests you. Code is from the <code class="file-ref">SimpleAgent/</code> project using local Ollama inference (<code class="file-ref">gemma4:12b</code>).</span>
+    <span data-lang="pt">Cada lição se apoia na anterior. Comece pela Lição 1 para entender o núcleo, depois escolha qualquer tópico que te interesse. O código é do projeto <code class="file-ref">SimpleAgent/</code> usando inferência local com Ollama (<code class="file-ref">gemma4:12b</code>).</span>
+  </p>
+
+  <!-- Section 1: Foundation -->
+  <div class="section-title">
+    <span data-lang="en">Foundation — The Agent Loop</span>
+    <span data-lang="pt">Fundamentos — O Loop do Agente</span>
+  </div>
+
+  <div class="lessons-grid">
+    <a href="lesson-01-basics.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">1</span>
+        <h3>
+          <span data-lang="en">Your First Agent</span>
+          <span data-lang="pt">Seu Primeiro Agente</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Understand the core architecture: OllamaClient, Agent loop, tool schemas, and tool_registry. Build a weather agent that calls a tool and responds.</span>
+        <span data-lang="pt">Entenda a arquitetura central: OllamaClient, loop do Agent, schemas de ferramentas e tool_registry. Construa um agente de clima que chama uma ferramenta e responde.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-core">Core</span>
+        <span class="file-ref">weather_agent.py</span>
+      </div>
+    </a>
+
+    <a href="lesson-02-search.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">2</span>
+        <h3>
+          <span data-lang="en">Real-World Tools</span>
+          <span data-lang="pt">Ferramentas do Mundo Real</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Add multiple tools (web search + page fetch), a planning system prompt, and multi-step tool usage. Build a research agent.</span>
+        <span data-lang="pt">Adicione múltiplas ferramentas (busca web + fetch de página), um system prompt com planejamento e uso de ferramentas em múltiplos passos. Construa um agente de pesquisa.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-core">Core</span>
+        <span class="file-ref">search_agent.py</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Section 2: MCP -->
+  <div class="section-title">MCP — Model Context Protocol</div>
+
+  <div class="lessons-grid">
+    <a href="lesson-03-mcp-external.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">3</span>
+        <h3>
+          <span data-lang="en">MCP: Using an External Server</span>
+          <span data-lang="pt">MCP: Usando um Servidor Externo</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Connect your agent to a pre-built MCP server (DuckDuckGo search). Dynamic tool discovery, schema conversion, and the async↔sync bridge.</span>
+        <span data-lang="pt">Conecte seu agente a um servidor MCP pré-construído (busca DuckDuckGo). Descoberta dinâmica de ferramentas, conversão de schema e a ponte async↔sync.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-intermediate">
+          <span data-lang="en">Intermediate</span>
+          <span data-lang="pt">Intermediário</span>
+        </span>
+        <span class="file-ref">mcp_search_agent.py</span>
+      </div>
+    </a>
+
+    <a href="lesson-04-mcp-custom.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">4</span>
+        <h3>
+          <span data-lang="en">MCP: Building Your Own Server</span>
+          <span data-lang="pt">MCP: Construindo Seu Próprio Servidor</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Create a custom MCP server that wraps a SQLite database. Build a natural language interface to your own data using the MCP protocol.</span>
+        <span data-lang="pt">Crie um servidor MCP personalizado que encapsula um banco de dados SQLite. Construa uma interface de linguagem natural para seus próprios dados usando o protocolo MCP.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-intermediate">
+          <span data-lang="en">Intermediate</span>
+          <span data-lang="pt">Intermediário</span>
+        </span>
+        <span class="file-ref">mcp_local_db_agent.py</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Section 3: Safety -->
+  <div class="section-title">
+    <span data-lang="en">Safety — Guardrails &amp; Human Oversight</span>
+    <span data-lang="pt">Segurança — Guardrails e Supervisão Humana</span>
+  </div>
+
+  <div class="lessons-grid">
+    <a href="lesson-05-guardrails.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">5</span>
+        <h3>
+          <span data-lang="en">Guardrails: Input, Tool &amp; Output Safety</span>
+          <span data-lang="pt">Guardrails: Segurança de Entrada, Ferramenta e Saída</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Three defense layers: LLM-as-judge input validation, regex-based prompt injection detection in tool outputs, and PII redaction in final responses.</span>
+        <span data-lang="pt">Três camadas de defesa: validação de entrada com LLM-como-juiz, detecção de injeção de prompt via regex nas saídas de ferramentas e redação de PII nas respostas finais.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-intermediate">
+          <span data-lang="en">Intermediate</span>
+          <span data-lang="pt">Intermediário</span>
+        </span>
+        <span class="file-ref">guardrails_agent.py</span>
+      </div>
+    </a>
+
+    <a href="lesson-06-hitl.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">6</span>
+        <h3>
+          <span data-lang="en">Human-in-the-Loop Approval</span>
+          <span data-lang="pt">Aprovação com Humano no Loop</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">An approval gate pattern for destructive actions. The agent pauses before irreversible operations and adapts when actions are denied.</span>
+        <span data-lang="pt">Um padrão de portão de aprovação para ações destrutivas. O agente pausa antes de operações irreversíveis e se adapta quando ações são negadas.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-intermediate">
+          <span data-lang="en">Intermediate</span>
+          <span data-lang="pt">Intermediário</span>
+        </span>
+        <span class="file-ref">hitl_agent.py</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Section 4: Advanced Patterns -->
+  <div class="section-title">
+    <span data-lang="en">Advanced Patterns — Agent Architectures</span>
+    <span data-lang="pt">Padrões Avançados — Arquiteturas de Agentes</span>
+  </div>
+
+  <div class="lessons-grid">
+    <a href="lesson-07-orchestrator.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">7</span>
+        <h3>
+          <span data-lang="en">Multi-Agent Orchestration</span>
+          <span data-lang="pt">Orquestração Multi-Agente</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">A top-level agent that routes requests to sub-agents. Learn the delegation pattern: orchestrator → weather-agent / search-agent.</span>
+        <span data-lang="pt">Um agente principal que roteia requisições para sub-agentes. Aprenda o padrão de delegação: orquestrador → agente-clima / agente-busca.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-advanced">
+          <span data-lang="en">Advanced</span>
+          <span data-lang="pt">Avançado</span>
+        </span>
+        <span class="file-ref">orchestrator_agent.py</span>
+      </div>
+    </a>
+
+    <a href="lesson-08-skills.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">8</span>
+        <h3>
+          <span data-lang="en">Dynamic Skill Loading</span>
+          <span data-lang="pt">Carregamento Dinâmico de Skills</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">An agent that starts lightweight and loads capabilities on-demand. Plugin architecture with skill discovery and runtime tool registration.</span>
+        <span data-lang="pt">Um agente que inicia leve e carrega capacidades sob demanda. Arquitetura de plugins com descoberta de skills e registro de ferramentas em tempo de execução.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-advanced">
+          <span data-lang="en">Advanced</span>
+          <span data-lang="pt">Avançado</span>
+        </span>
+        <span class="file-ref">skills_agent.py</span>
+      </div>
+    </a>
+
+    <a href="lesson-09-extraction.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">9</span>
+        <h3>
+          <span data-lang="en">Structured Data Extraction</span>
+          <span data-lang="pt">Extração de Dados Estruturados</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Use tool calling as a structured output mechanism. The LLM fills tool parameters instead of generating free text — extracting invoices, contacts, meetings.</span>
+        <span data-lang="pt">Use chamada de ferramentas como mecanismo de saída estruturada. O LLM preenche parâmetros da ferramenta em vez de gerar texto livre — extraindo notas fiscais, contatos, reuniões.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-advanced">
+          <span data-lang="en">Advanced</span>
+          <span data-lang="pt">Avançado</span>
+        </span>
+        <span class="file-ref">extraction_agent.py</span>
+      </div>
+    </a>
+
+    <a href="lesson-10-memory.html" class="lesson-card">
+      <div class="lesson-header">
+        <span class="lesson-num">10</span>
+        <h3>
+          <span data-lang="en">Context &amp; Memory Management</span>
+          <span data-lang="pt">Gestão de Contexto e Memória</span>
+        </h3>
+      </div>
+      <p>
+        <span data-lang="en">Compare naive (full history) vs. managed (rolling summary + memory store) agents. See how context compression prevents degradation over long conversations.</span>
+        <span data-lang="pt">Compare agentes ingênuos (histórico completo) vs. gerenciados (resumo contínuo + armazenamento de memória). Veja como compressão de contexto previne degradação em conversas longas.</span>
+      </p>
+      <div class="meta">
+        <span class="badge badge-advanced">
+          <span data-lang="en">Advanced</span>
+          <span data-lang="pt">Avançado</span>
+        </span>
+        <span class="file-ref">memory_agent.py</span>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<footer>
+  <span data-lang="en">SimpleAgent Tutorial — Built for the GenAI/Agentic AI course</span>
+  <span data-lang="pt">Tutorial SimpleAgent — Construído para o curso de GenAI/IA Agêntica</span>
+</footer>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

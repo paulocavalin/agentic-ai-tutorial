@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  box-shadow: var(--cp-shadow);
+}
+.lesson-nav a,
+.lesson-nav span {
+  text-decoration: none;
+  color: var(--cp-text);
+  font-weight: 600;
+}
+.lesson-nav .muted {
+  color: var(--cp-text-muted);
+  font-weight: 500;
+}
+.hero,
+.section,
+.try-it,
+.comparison-table {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--cp-shadow);
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--cp-accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+h1, h2, h3 { line-height: 1.2; }
+h1 { margin: 0 0 12px; font-size: 2.2rem; }
+h2 { margin: 0 0 14px; font-size: 1.35rem; }
+h3 { margin: 24px 0 10px; font-size: 1.05rem; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px 20px; padding: 0; }
+li { margin-bottom: 8px; }
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.card,
+.callout,
+.note,
+.step-list,
+.mini-card {
+  background: var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 18px;
+}
+.callout {
+  border-left: 6px solid var(--cp-accent);
+}
+.note {
+  border-left: 6px solid var(--cp-warning);
+}
+pre code {
+  display: block;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+code,
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+}
+.file-ref {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 0.625rem;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  color: var(--cp-text-soft);
+}
+.caption {
+  margin: 0 0 10px;
+  color: var(--cp-text-muted);
+  font-size: 0.95rem;
+}
+.annotations {
+  margin-top: 12px;
+}
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+th,
+td {
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--cp-surface-soft);
+}
+.footer-space { margin-top: 12px; }
+</style>
+<title>Lesson 7 — Multi-Agent Orchestration — AI Agents from Scratch</title>
+</head>
+<body>
+<div class="page">
+  <nav class="lesson-nav">
+    <a href="lesson-06-hitl.html"><span data-lang="en">← Lesson 6: Human-in-the-Loop</span><span data-lang="pt">← Lição 6: Humano no Loop</span></a>
+    <span class="muted"><span data-lang="en">Lesson 7</span><span data-lang="pt">Lição 7</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="langSwitcher" class="lang-switcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="lesson-08-skills.html"><span data-lang="en">Next: Dynamic Skill Loading →</span><span data-lang="pt">Próxima: Carregamento Dinâmico de Skills →</span></a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow"><span data-lang="en">Lesson 7</span><span data-lang="pt">Lição 7</span></p>
+    <h1><span data-lang="en">Multi-Agent Orchestration</span><span data-lang="pt">Orquestração Multi-Agente</span></h1>
+    <p><span data-lang="en">Source: </span><span data-lang="pt">Fonte: </span><span class="file-ref">examples/orchestrator_agent.py</span></p>
+    <div class="grid two">
+      <div class="card">
+        <h2><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h2>
+        <ul>
+          <li><span data-lang="en">Why an orchestrator delegates instead of answering directly.</span><span data-lang="pt">Por que um orquestrador delega em vez de responder diretamente.</span></li>
+          <li><span data-lang="en">How <code>delegate_to_agent</code> acts like a meta-tool.</span><span data-lang="pt">Como <code>delegate_to_agent</code> funciona como uma meta-ferramenta.</span></li>
+          <li><span data-lang="en">Why every sub-agent is created fresh with no shared memory.</span><span data-lang="pt">Por que cada sub-agente é criado do zero sem memória compartilhada.</span></li>
+          <li><span data-lang="en">How the plugin-style <code>tools/</code> catalog feeds sub-agents.</span><span data-lang="pt">Como o catálogo no estilo plugin <code>tools/</code> alimenta sub-agentes.</span></li>
+        </ul>
+      </div>
+      <div class="note">
+        <strong><span data-lang="en">Prerequisites.</span><span data-lang="pt">Pré-requisitos.</span></strong>
+        <p><span data-lang="en">Lessons 1-2 already covered the core <code>Agent.execute()</code> loop, tool schemas, and basic multi-tool reasoning. This lesson only explains what orchestration adds on top.</span><span data-lang="pt">As Lições 1-2 já cobriam o loop central <code>Agent.execute()</code>, esquemas de ferramentas e raciocínio básico multi-ferramenta. Esta lição explica apenas o que a orquestração acrescenta.</span></p>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <h2><span data-lang="en">The new pattern: one agent coordinating other agents</span><span data-lang="pt">O novo padrão: um agente coordenando outros agentes</span></h2>
+    <p><span data-lang="en">The orchestrator is not the domain expert. Its job is to inspect the request, decide which specialist should handle each part, and then merge the results into one final reply.</span><span data-lang="pt">O orquestrador não é o especialista no domínio. Seu trabalho é inspecionar a requisição, decidir qual especialista deve tratar cada parte e então mesclar os resultados em uma resposta final.</span></p>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">This example treats delegation itself as a tool call. That means the same loop from Lessons 1-2 still works; the only difference is that the tool now spins up another agent instead of hitting an external API.</span><span data-lang="pt">Este exemplo trata a delegação em si como uma chamada de ferramenta. Isso significa que o mesmo loop das Lições 1-2 ainda funciona; a única diferença é que a ferramenta agora cria outro agente em vez de chamar uma API externa.</span></p>
+    </div>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">What the orchestrator knows</span><span data-lang="pt">O que o orquestrador sabe</span></h3>
+        <ul>
+          <li><span data-lang="en">Available agent names.</span><span data-lang="pt">Nomes dos agentes disponíveis.</span></li>
+          <li><span data-lang="en">When to call one agent or multiple agents.</span><span data-lang="pt">Quando chamar um ou múltiplos agentes.</span></li>
+          <li><span data-lang="en">How to combine returned answers.</span><span data-lang="pt">Como combinar as respostas retornadas.</span></li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">What it does not know</span><span data-lang="pt">O que ele não sabe</span></h3>
+        <ul>
+          <li><span data-lang="en">Weather lookup details.</span><span data-lang="pt">Detalhes da consulta de clima.</span></li>
+          <li><span data-lang="en">Web research tool behavior.</span><span data-lang="pt">Comportamento das ferramentas de pesquisa web.</span></li>
+          <li><span data-lang="en">Any long-lived shared memory between agents.</span><span data-lang="pt">Qualquer memória compartilhada de longa duração entre agentes.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">1) The system prompt enforces delegation</span><span data-lang="pt">1) O prompt de sistema impõe a delegação</span></h2>
+    <p class="caption"><span data-lang="en">The prompt is the contract: the orchestrator must route first, then synthesize.</span><span data-lang="pt">O prompt é o contrato: o orquestrador deve rotear primeiro, depois sintetizar.</span></p>
+    <pre><code>ORCHESTRATOR_SYSTEM_PROMPT = (
+    "You are an orchestrator agent. Your job is to route user requests to specialized sub-agents.
+
+"
+    "Available sub-agents (via delegate_to_agent):
+"
+    "- weather-agent: handles weather questions
+"
+    "- search-agent: handles general research/current topics
+
+"
+    "Rules:
+"
+    "1. Never answer weather or research questions directly.
+"
+    "2. Always delegate to one or more sub-agents first.
+"
+    "3. If the user asks both weather and research, call both agents.
+"
+    "4. Pass complete context to each sub-agent since they do not share memory with you.
+"
+    "5. After sub-agent results return, synthesize one final response for the user.
+"
+    "6. Before each delegation, include a brief planning sentence in the assistant content."
+)</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><strong>Rule 1</strong> prevents the orchestrator from bypassing specialists.</span><span data-lang="pt"><strong>Regra 1</strong> impede o orquestrador de ignorar especialistas.</span></li>
+      <li><span data-lang="en"><strong>Rule 4</strong> matters because each delegation creates a fresh agent instance.</span><span data-lang="pt"><strong>Regra 4</strong> importa porque cada delegação cria uma instância de agente nova.</span></li>
+      <li><span data-lang="en"><strong>Rule 5</strong> makes the top-level answer a composition step, not a first-pass answer.</span><span data-lang="pt"><strong>Regra 5</strong> torna a resposta do nível superior uma etapa de composição, não uma resposta imediata.</span></li>
+    </ul>
+    <div class="note">
+      <strong><span data-lang="en">⚠️ Note</span><span data-lang="pt">⚠️ Nota</span></strong>
+      <p><span data-lang="en">If the prompt merely said "use sub-agents when helpful," the model might answer directly. The explicit "never answer directly" rule is what turns this into a reliable pattern.</span><span data-lang="pt">Se o prompt apenas dissesse "use sub-agentes quando útil", o modelo poderia responder diretamente. A regra explícita "nunca responda diretamente" é o que torna isso um padrão confiável.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">2) <code>delegate_to_agent</code> is a meta-tool</span><span data-lang="pt">2) <code>delegate_to_agent</code> é uma meta-ferramenta</span></h2>
+    <p><span data-lang="en">In earlier lessons, tools called real-world functions such as search or fetch. Here, the tool creates and runs another <code>Agent</code>. That makes it a tool about tools and agents — a meta-tool.</span><span data-lang="pt">Nas lições anteriores, ferramentas chamavam funções do mundo real como busca ou obtenção. Aqui, a ferramenta cria e executa outro <code>Agent</code>. Isso a torna uma ferramenta sobre ferramentas e agentes — uma meta-ferramenta.</span></p>
+    <pre><code>delegate_to_agent_tool_schema = {
+    "type": "function",
+    "function": {
+        "name": "delegate_to_agent",
+        "description": "Delegate a task to a specialized sub-agent and return its result.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "agent_name": {
+                    "type": "string",
+                    "enum": ["weather-agent", "search-agent"],
+                },
+                "task_context": {
+                    "type": "object",
+                    "properties": {
+                        "question": {"type": "string"}
+                    },
+                    "required": ["question"],
+                },
+            },
+            "required": ["agent_name", "task_context"],
+        },
+    },
+}</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><code>agent_name</code> constrains routing to known specialists.</span><span data-lang="pt"><code>agent_name</code> limita o roteamento a especialistas conhecidos.</span></li>
+      <li><span data-lang="en"><code>task_context</code> forces the orchestrator to pass complete input, not just a label.</span><span data-lang="pt"><code>task_context</code> força o orquestrador a passar a entrada completa, não apenas um rótulo.</span></li>
+      <li><span data-lang="en">The return value comes back into the same core loop, so orchestration composes cleanly with the base agent design.</span><span data-lang="pt">O valor de retorno volta ao mesmo loop central, então a orquestração se combina limpar com o design base do agente.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">3) The factory pattern closes over shared infrastructure</span><span data-lang="pt">3) O padrão de fábrica captura a infraestrutura compartilhada</span></h2>
+    <p class="caption"><span data-lang="en"><code>make_delegate_tool()</code> returns the actual callable tool. The outer function captures the client, trace flag, and discovered tool catalog.</span><span data-lang="pt"><code>make_delegate_tool()</code> retorna a ferramenta callable real. A função externa captura o cliente, o flag de rastreamento e o catálogo de ferramentas descoberto.</span></p>
+    <pre><code>def make_delegate_tool(client, trace, tool_catalog):
+    def delegate_to_agent(agent_name: str, task_context: Dict[str, Any]) -> Dict[str, Any]:
+        question = str(task_context.get("question", "")).strip()
+        if not question:
+            return {"agent_name": agent_name, "error": "Missing task_context.question"}
+
+        if agent_name == "weather-agent":
+            sub_agent = build_weather_agent_with_tools(client, trace, tool_catalog)
+        elif agent_name == "search-agent":
+            sub_agent = build_search_agent_with_tools(client, trace, tool_catalog)
+        else:
+            return {"agent_name": agent_name, "error": f"Unknown agent_name '{agent_name}'"}
+
+        answer = sub_agent.execute(question)
+        return {"agent_name": agent_name, "question": question, "answer": answer}
+
+    return delegate_to_agent</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">The outer function is a <strong>factory</strong>: it prepares runtime dependencies once.</span><span data-lang="pt">A função externa é uma <strong>fábrica</strong>: ela prepara as dependências de runtime uma vez.</span></li>
+      <li><span data-lang="en">The inner function is the <strong>tool handler</strong> the main agent can call repeatedly.</span><span data-lang="pt">A função interna é o <strong>manipulador de ferramenta</strong> que o agente principal pode chamar repetidamente.</span></li>
+      <li><span data-lang="en">Because <code>sub_agent</code> is created inside the tool call, every delegation starts with clean state.</span><span data-lang="pt">Como <code>sub_agent</code> é criado dentro da chamada de ferramenta, cada delegação começa com estado limpo.</span></li>
+    </ul>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">This closure avoids global state. The orchestrator does not need a giant singleton registry; it simply captures the live client and tool catalog in the returned function.</span><span data-lang="pt">Este closure evita estado global. O orquestrador não precisa de um registro singleton gigante; ele simplesmente captura o cliente ativo e o catálogo de ferramentas na função retornada.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">4) Sub-agent lifecycle: fresh instance, isolated context</span><span data-lang="pt">4) Ciclo de vida do sub-agente: instância nova, contexto isolado</span></h2>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">Lifecycle per delegation</span><span data-lang="pt">Ciclo de vida por delegação</span></h3>
+        <ol>
+          <li><span data-lang="en">Receive <code>agent_name</code> and <code>question</code>.</span><span data-lang="pt">Receber <code>agent_name</code> e <code>question</code>.</span></li>
+          <li><span data-lang="en">Build the specialist agent.</span><span data-lang="pt">Construir o agente especialista.</span></li>
+          <li><span data-lang="en">Attach only that specialist's tools.</span><span data-lang="pt">Adicionar apenas as ferramentas daquele especialista.</span></li>
+          <li><span data-lang="en">Run <code>sub_agent.execute(question)</code>.</span><span data-lang="pt">Executar <code>sub_agent.execute(question)</code>.</span></li>
+          <li><span data-lang="en">Return structured results to the orchestrator.</span><span data-lang="pt">Retornar resultados estruturados ao orquestrador.</span></li>
+        </ol>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">What isolation buys you</span><span data-lang="pt">O que o isolamento proporciona</span></h3>
+        <ul>
+          <li><span data-lang="en">No accidental cross-talk between agents.</span><span data-lang="pt">Sem interferência acidental entre agentes.</span></li>
+          <li><span data-lang="en">Different system prompts per role.</span><span data-lang="pt">Prompts de sistema diferentes por papel.</span></li>
+          <li><span data-lang="en">Different tool sets per role.</span><span data-lang="pt">Conjuntos de ferramentas diferentes por papel.</span></li>
+          <li><span data-lang="en">Easy reasoning about each specialist's behavior.</span><span data-lang="pt">Raciocínio fácil sobre o comportamento de cada especialista.</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="note">
+      <strong><span data-lang="en">⚠️ Note</span><span data-lang="pt">⚠️ Nota</span></strong>
+      <p><span data-lang="en">No shared memory means the orchestrator must restate context every time. That is why the schema uses <code>task_context</code> instead of a bare string.</span><span data-lang="pt">Sem memória compartilhada, o orquestrador deve reafirmar o contexto toda vez. É por isso que o esquema usa <code>task_context</code> em vez de uma string simples.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">5) Dynamic tool discovery uses a plugin directory</span><span data-lang="pt">5) Descoberta dinâmica de ferramentas usa um diretório de plugins</span></h2>
+    <p><span data-lang="en">Sub-agents do not hardcode raw function definitions. They load tools from the </span><span data-lang="pt">Sub-agentes não codificam definições de funções brutas. Eles carregam ferramentas do diretório </span><span class="file-ref">tools/</span><span data-lang="en"> directory, where each plugin folder contains a schema and a handler.</span><span data-lang="pt">, onde cada pasta de plugin contém um esquema e um manipulador.</span></p>
+    <pre><code>def discover_tools(tools_root: str) -> Dict[str, Dict[str, Any]]:
+    root = Path(tools_root)
+    catalog = {}
+    for tool_dir in sorted(root.glob("*/")):
+        schema_path = tool_dir / "schema.json"
+        handler_path = tool_dir / "handler.py"
+        if not schema_path.exists() or not handler_path.exists():
+            continue
+
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        tool_name = schema.get("function", {}).get("name", "").strip()
+        module = _load_python_module(handler_path)
+        run_func = getattr(module, "run", None)
+
+        catalog[tool_name] = {
+            "schema": schema,
+            "func": run_func,
+            "path": str(tool_dir),
+        }
+    return catalog</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><span class="file-ref">schema.json</span> defines what the model sees.</span><span data-lang="pt"><span class="file-ref">schema.json</span> define o que o modelo vê.</span></li>
+      <li><span data-lang="en"><span class="file-ref">handler.py</span> defines what Python executes.</span><span data-lang="pt"><span class="file-ref">handler.py</span> define o que o Python executa.</span></li>
+      <li><span data-lang="en">The catalog becomes a reusable inventory that multiple agent builders can slice differently.</span><span data-lang="pt">O catálogo torna-se um inventário reutilizável que múltiplos construtores de agentes podem fatiar de formas diferentes.</span></li>
+    </ul>
+    <div class="card">
+      <h3><span data-lang="en">Plugin structure</span><span data-lang="pt">Estrutura de plugins</span></h3>
+      <ul>
+        <li><span class="file-ref">tools/get_temperature/schema.json</span></li>
+        <li><span class="file-ref">tools/get_temperature/handler.py</span></li>
+        <li><span class="file-ref">tools/web_search/schema.json</span></li>
+        <li><span class="file-ref">tools/web_fetch/handler.py</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">6) Response synthesis happens after delegation</span><span data-lang="pt">6) A síntese de respostas acontece após a delegação</span></h2>
+    <p><span data-lang="en">The orchestrator can call one sub-agent or multiple sub-agents. Each tool result comes back as structured data with <code>agent_name</code>, <code>question</code>, and <code>answer</code>. The main agent then writes one combined response for the user.</span><span data-lang="pt">O orquestrador pode chamar um ou múltiplos sub-agentes. Cada resultado de ferramenta retorna como dados estruturados com <code>agent_name</code>, <code>question</code> e <code>answer</code>. O agente principal então escreve uma resposta combinada para o usuário.</span></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><span data-lang="en">Step</span><span data-lang="pt">Etapa</span></th>
+            <th><span data-lang="en">Who acts</span><span data-lang="pt">Quem age</span></th>
+            <th><span data-lang="en">Output</span><span data-lang="pt">Saída</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span data-lang="en">Plan</span><span data-lang="pt">Planejamento</span></td>
+            <td><span data-lang="en">Orchestrator</span><span data-lang="pt">Orquestrador</span></td>
+            <td><span data-lang="en">Brief planning sentence in assistant content.</span><span data-lang="pt">Frase de planejamento breve no content do assistente.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Delegate</span><span data-lang="pt">Delegação</span></td>
+            <td><span data-lang="en">Meta-tool</span><span data-lang="pt">Meta-ferramenta</span></td>
+            <td><span data-lang="en">Structured tool call for weather, search, or both.</span><span data-lang="pt">Chamada de ferramenta estruturada para clima, pesquisa ou ambos.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Specialize</span><span data-lang="pt">Especialização</span></td>
+            <td><span data-lang="en">Sub-agent</span><span data-lang="pt">Sub-agente</span></td>
+            <td><span data-lang="en">Domain-specific answer using its own tools.</span><span data-lang="pt">Resposta específica do domínio usando suas próprias ferramentas.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Synthesize</span><span data-lang="pt">Síntese</span></td>
+            <td><span data-lang="en">Orchestrator</span><span data-lang="pt">Orquestrador</span></td>
+            <td><span data-lang="en">One final answer that combines all returned outputs.</span><span data-lang="pt">Uma resposta final que combina todas as saídas retornadas.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout footer-space">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">Orchestration is still just the standard loop plus one extra layer of indirection. The orchestrator does not need a different engine; it only needs a tool that knows how to build agents.</span><span data-lang="pt">A orquestração ainda é apenas o loop padrão mais uma camada extra de indireção. O orquestrador não precisa de um mecanismo diferente; ele só precisa de uma ferramenta que saiba como construir agentes.</span></p>
+    </div>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it yourself</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Run the orchestrator with a prompt that needs two specialists:</span><span data-lang="pt">Execute o orquestrador com um prompt que precisa de dois especialistas:</span></p>
+    <pre><code>python examples/orchestrator_agent.py   --prompt "What's the weather in Tokyo, and summarize the latest agentic AI trends?"   --trace</code></pre>
+    <p><span data-lang="en">Watch for the planning sentence, the <code>delegate_to_agent</code> tool calls, and the final merged answer.</span><span data-lang="pt">Observe a frase de planejamento, as chamadas de ferramenta <code>delegate_to_agent</code> e a resposta final mesclada.</span></p>
+  </section>
+
+  <nav class="lesson-nav">
+    <a href="lesson-06-hitl.html"><span data-lang="en">← Lesson 6: Human-in-the-Loop</span><span data-lang="pt">← Lição 6: Humano no Loop</span></a>
+    <span class="muted"><span data-lang="en">Lesson 7</span><span data-lang="pt">Lição 7</span></span>
+    <a href="lesson-08-skills.html"><span data-lang="en">Next: Dynamic Skill Loading →</span><span data-lang="pt">Próxima: Carregamento Dinâmico de Skills →</span></a>
+  </nav>
+</div>
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+</body>
+</html>

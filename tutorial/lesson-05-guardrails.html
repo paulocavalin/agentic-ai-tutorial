@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 5: Guardrails — Input, Tool & Output Safety — AI Agents from Scratch</title>
+
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+code, pre { font-family: Consolas, "Courier New", Courier, monospace; }
+.wrapper { max-width: 980px; margin: 0 auto; padding: 24px; }
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 0 0 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--cp-shadow);
+}
+.navbar a { color: var(--cp-link); text-decoration: none; font-weight: 600; }
+.navbar .current { color: var(--cp-text-muted); font-size: 0.95rem; font-weight: 600; }
+.hero, .section, .try-it {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.hero h1 { margin: 0 0 12px; font-size: 2.1rem; line-height: 1.2; }
+.hero p, .section p, .section li, .try-it p, .note, .table-wrap, .diagram-step { color: var(--cp-text-muted); }
+.lead { font-size: 1.02rem; }
+.kicker {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+  color: var(--cp-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+.card { padding: 16px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-bg-elevated); }
+.card h3, .section h2, .section h3, .try-it h2 { margin-top: 0; color: var(--cp-text); }
+.section h2 { margin-bottom: 12px; font-size: 1.45rem; }
+.section h3 { margin-bottom: 8px; font-size: 1.05rem; }
+.note { padding: 12px 14px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface-soft); }
+.key-insight {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--cp-border);
+  border-left: 6px solid var(--cp-accent);
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+}
+.key-insight strong { color: var(--cp-text); }
+pre {
+  margin: 16px 0;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--cp-text);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px; border: 1px solid var(--cp-border); text-align: left; vertical-align: top; }
+th { background: var(--cp-surface-soft); color: var(--cp-text); }
+.diagram { display: grid; gap: 12px; margin: 16px 0; }
+.diagram-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; align-items: stretch; }
+.diagram-step { padding: 14px; border: 1px solid var(--cp-border-strong); border-radius: 0.625rem; background: var(--cp-bg-elevated); text-align: center; }
+.arrow { text-align: center; color: var(--cp-text-soft); font-weight: 700; }
+.inline-code { display: inline-block; padding: 2px 8px; border-radius: 0.625rem; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text); }
+.footer { padding: 20px 0 8px; color: var(--cp-text-soft); text-align: center; font-size: 0.9rem; }
+@media (max-width: 720px) {
+  .wrapper { padding: 16px; }
+  .navbar { flex-direction: column; align-items: flex-start; }
+  .hero h1 { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <nav class="navbar">
+    <a href="lesson-04-mcp-custom.html"><span data-lang="en">← Lesson 4</span><span data-lang="pt">← Lição 4</span></a>
+    <span class="current"><span data-lang="en">Lesson 5</span><span data-lang="pt">Lição 5</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="lang-switcher" id="langSwitcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="lesson-06-hitl.html"><span data-lang="en">Lesson 6 →</span><span data-lang="pt">Lição 6 →</span></a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="kicker"><span data-lang="en">Advanced · Safety</span><span data-lang="pt">Avançado · Segurança</span></div>
+    <h1><span data-lang="en">Lesson 5: Guardrails — Input, Tool &amp; Output Safety</span><span data-lang="pt">Lição 5: Guardrails — Segurança de Input, Tool e Output</span></h1>
+    <p class="lead"><span data-lang="en">This lesson turns the Lesson 2 search agent into a defense-in-depth pipeline. Instead of trusting the prompt, the fetched page, and the final answer equally, <span class="inline-code">examples/guardrails_agent.py</span> adds three checkpoints around the same core agent loop.</span><span data-lang="pt">Esta lição transforma o agent de busca da Lição 2 em um pipeline de defense-in-depth. Em vez de confiar igualmente no prompt, na página buscada e na resposta final, <span class="inline-code">examples/guardrails_agent.py</span> adiciona três checkpoints ao redor do mesmo loop central do agent.</span></p>
+    <h3><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h3>
+    <ul>
+      <li><span data-lang="en">Why safety works better as multiple small guards than one giant policy prompt.</span><span data-lang="pt">Por que segurança funciona melhor com vários guardas pequenos do que com um prompt gigante de política.</span></li>
+      <li><span data-lang="en">How a second LLM call can classify prompts before the main agent sees them.</span><span data-lang="pt">Como uma segunda chamada de LLM pode classificar prompts antes de o agent principal vê-los.</span></li>
+      <li><span data-lang="en">How to sanitize tool output before it becomes part of the model context.</span><span data-lang="pt">Como sanitizar a saída de uma tool antes que ela vire parte do contexto do modelo.</span></li>
+      <li><span data-lang="en">How to detect and redact common PII patterns in the final answer.</span><span data-lang="pt">Como detectar e redigir padrões comuns de PII na resposta final.</span></li>
+    </ul>
+    <p class="note"><strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <span data-lang="en">Review Lesson 2 for the original <span class="inline-code">search_agent.py</span> pattern, plus Lessons 5 and 6 for structured outputs and memory-aware context handling.</span><span data-lang="pt">Revise a Lição 2 para o padrão original de <span class="inline-code">search_agent.py</span>, além das Lições 5 e 6 para saídas estruturadas e contexto com consciência de memória.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The three-layer defense architecture</span><span data-lang="pt">A arquitetura de defesa em três camadas</span></h2>
+    <p><span data-lang="en">The file keeps the same agent core from Lesson 2: a system prompt, a tool list, a registry, and a call to <span class="inline-code">agent.execute(prompt)</span>. The difference is that every trust boundary now gets its own guardrail.</span><span data-lang="pt">O arquivo mantém o mesmo núcleo de agent da Lição 2: um system prompt, uma lista de tools, um registry e uma chamada para <span class="inline-code">agent.execute(prompt)</span>. A diferença é que agora cada fronteira de confiança ganha seu próprio guardrail.</span></p>
+    <div class="diagram">
+      <div class="diagram-row">
+        <div class="diagram-step"><strong><span data-lang="en">User</span><span data-lang="pt">Usuário</span></strong><br><span data-lang="en">Prompt enters the pipeline</span><span data-lang="pt">O prompt entra no fluxo</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Input Guard</span><span data-lang="pt">Guarda de Input</span></strong><br><span data-lang="en">SAFE or UNSAFE</span><span data-lang="pt">SAFE ou UNSAFE</span></div>
+        <div class="diagram-step"><strong>Agent</strong><br><span data-lang="en">Plans and calls tools</span><span data-lang="pt">Planeja e chama tools</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Tool Guard</span><span data-lang="pt">Guarda de Tool</span></strong><br><span data-lang="en">Strip injection patterns</span><span data-lang="pt">Remove padrões de injection</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">LLM Answer</span><span data-lang="pt">Resposta do LLM</span></strong><br><span data-lang="en">Synthesizes clean context</span><span data-lang="pt">Sintetiza contexto limpo</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Output Guard</span><span data-lang="pt">Guarda de Output</span></strong><br><span data-lang="en">Redact PII before display</span><span data-lang="pt">Redige PII antes de exibir</span></div>
+      </div>
+      <div class="arrow"><span data-lang="en">User → Input Guard → Agent → Tool Guard → LLM → Output Guard → User</span><span data-lang="pt">Usuário → Guarda de Input → Agent → Guarda de Tool → LLM → Guarda de Output → Usuário</span></div>
+    </div>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">each layer protects against a different failure mode. A good input classifier does not stop malicious HTML, and a good sanitizer does not prevent PII leakage. The code treats them as independent switches instead of assuming one guard solves all safety problems.</span><span data-lang="pt">cada camada protege contra um modo de falha diferente. Um bom classificador de input não bloqueia HTML malicioso, e um bom sanitizer não evita vazamento de PII. O código trata cada uma como um switch independente em vez de assumir que um único guarda resolve todos os problemas de segurança.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Layer 1: LLM-as-judge input classification</span><span data-lang="pt">Camada 1: classificação de input com LLM-as-judge</span></h2>
+    <p><span data-lang="en">The input guard uses a separate system prompt, <span class="inline-code">_INPUT_JUDGE_SYSTEM</span>, and a direct single-turn LLM call. That makes the classifier narrower than the full agent: it only decides whether the prompt is SAFE or UNSAFE.</span><span data-lang="pt">O guarda de input usa um system prompt separado, <span class="inline-code">_INPUT_JUDGE_SYSTEM</span>, e uma chamada direta de LLM em turno único. Isso deixa o classificador mais estreito que o agent completo: ele só decide se o prompt é SAFE ou UNSAFE.</span></p>
+    <pre><code>_INPUT_JUDGE_SYSTEM = (
+    "You are a security classifier. Analyze the user message and classify it.
+"
+    "Return ONLY valid JSON, no extra text:
+"
+    '{"verdict": "SAFE" | "UNSAFE", "reason": "&lt;one sentence&gt;"}'
+)
+
+def check_input(client: OllamaClient, message: str, trace: bool) -&gt; InputVerdict:
+    raw = _llm_call_raw(client, _INPUT_JUDGE_SYSTEM, f"User message: {message}")
+    # parse JSON or fall back to heuristic handling
+</code></pre>
+    <p><span data-lang="en">This design matters for two reasons. First, the classifier is isolated from tools and long conversation state, which reduces attack surface. Second, the main agent only runs after the prompt is cleared.</span><span data-lang="pt">Esse design importa por dois motivos. Primeiro, o classificador fica isolado de tools e de estado longo de conversa, o que reduz a superfície de ataque. Segundo, o agent principal só roda depois que o prompt é liberado.</span></p>
+    <div class="lesson-grid">
+      <div class="card">
+        <h3><span data-lang="en">SAFE examples</span><span data-lang="pt">Exemplos SAFE</span></h3>
+        <p><span data-lang="en">Normal research requests, comparison questions, and support prompts should pass unchanged.</span><span data-lang="pt">Pedidos normais de pesquisa, perguntas de comparação e prompts de suporte devem passar sem mudança.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">UNSAFE examples</span><span data-lang="pt">Exemplos UNSAFE</span></h3>
+        <p><span data-lang="en">Jailbreaks, “ignore previous instructions,” credential requests, or role-played bypass attempts should be blocked before tool usage starts.</span><span data-lang="pt">Jailbreaks, “ignore previous instructions”, pedidos de credenciais ou tentativas de bypass em role-play devem ser bloqueados antes do uso de tools.</span></p>
+      </div>
+    </div>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">the classifier is not replacing the main model. It is a specialized pre-filter. This is a classic “small model judges, large model solves” pattern.</span><span data-lang="pt">o classificador não substitui o modelo principal. Ele é um pré-filtro especializado. Este é o padrão clássico de “small model judges, large model solves”.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Layer 2: prompt injection detection in tool outputs</span><span data-lang="pt">Camada 2: detecção de prompt injection nas saídas de tools</span></h2>
+    <p><span data-lang="en">Lesson 2 trusted <span class="inline-code">web_fetch()</span> and fed its content directly into the agent loop. Lesson 7 assumes fetched text is untrusted. It scans every line with <span class="inline-code">_INJECTION_PATTERNS</span> before the result goes back to the model.</span><span data-lang="pt">A Lição 2 confiava em <span class="inline-code">web_fetch()</span> e jogava seu conteúdo direto no loop do agent. A Lição 7 assume que texto buscado não é confiável. Ela varre cada linha com <span class="inline-code">_INJECTION_PATTERNS</span> antes que o resultado volte para o modelo.</span></p>
+    <pre><code>_INJECTION_PATTERNS = [
+    re.compile(r"ignore\s+(all\s+)?previous\s+instructions?", re.IGNORECASE),
+    re.compile(r"reveal\s+.{0,40}(system\s+prompt|api.?key|password|secret)", re.IGNORECASE),
+    re.compile(r"override\s+.{0,30}(safety|filter|restriction|rule)", re.IGNORECASE),
+]
+
+def sanitize_tool_result(result: Dict[str, Any], trace: bool):
+    content = str(result.get("content", ""))
+    injections = []
+    clean_lines = []
+    for line in content.splitlines():
+        if any(pattern.search(line) for pattern in _INJECTION_PATTERNS):
+            injections.append(line.strip()[:120])
+            continue
+        clean_lines.append(line)
+    result = {**result, "content": "
+".join(clean_lines)}
+    return result, SanitizerResult(...)
+</code></pre>
+    <p><span data-lang="en">The sanitizer is intentionally simple: line-based regex filtering. That makes it easy to explain, test, and extend. In production you would likely add provenance tags, audit logs, or stronger content normalization, but the teaching pattern stays the same.</span><span data-lang="pt">O sanitizer é simples de propósito: filtragem por regex baseada em linhas. Isso facilita explicar, testar e estender. Em produção você provavelmente adicionaria tags de proveniência, logs de auditoria ou uma normalização de conteúdo mais forte, mas o padrão didático continua o mesmo.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">a tool result is not automatically “trusted” just because your own code fetched it. External pages, docs, tickets, emails, and PDFs can all contain prompt injection.</span><span data-lang="pt">um resultado de tool não vira “confiável” automaticamente só porque foi buscado pelo seu código. Páginas externas, docs, tickets, emails e PDFs podem conter prompt injection.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The wrapper pattern: guarding an existing tool</span><span data-lang="pt">O padrão de wrapper: protegendo uma tool existente</span></h2>
+    <p><span data-lang="en">The most reusable idea in this lesson is <span class="inline-code">make_guarded_web_fetch()</span>. Instead of rewriting the search agent, the code wraps the existing tool and keeps the agent contract identical.</span><span data-lang="pt">A ideia mais reutilizável desta lição é <span class="inline-code">make_guarded_web_fetch()</span>. Em vez de reescrever o agent de busca, o código envolve a tool existente e mantém o contrato do agent idêntico.</span></p>
+    <pre><code>def make_guarded_web_fetch(trace: bool, skip: bool):
+    def _fetch(url: str) -&gt; Dict[str, Any]:
+        result = web_fetch(url)
+        if skip:
+            return result
+        result, san = sanitize_tool_result(result, trace)
+        if san.was_modified:
+            _print_panel("⚠ TOOL SANITIZER", "Prompt injection detected")
+        return result
+    return _fetch
+
+agent = Agent(
+    client=client,
+    system=SEARCH_SYSTEM_PROMPT,
+    tools=[web_search_tool_schema, web_fetch_tool_schema],
+    tool_registry={"web_search": web_search, "web_fetch": guarded_fetch},
+)
+</code></pre>
+    <p><span data-lang="en">This is a higher-order function: it returns a new tool that behaves like <span class="inline-code">web_fetch</span> but inserts sanitization in the middle. The Agent never needs to know whether a tool is raw, cached, guarded, or rate-limited.</span><span data-lang="pt">Isto é uma higher-order function: ela retorna uma nova tool que se comporta como <span class="inline-code">web_fetch</span>, mas insere sanitização no meio. O Agent nunca precisa saber se a tool é raw, cacheada, protegida ou rate-limited.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Layer 3: output guardrail with PII redaction</span><span data-lang="pt">Camada 3: guardrail de output com redação de PII</span></h2>
+    <p><span data-lang="en">After the LLM produces its final answer, the code runs one last pass for personally identifiable information. The example uses regexes for Brazilian identifiers plus common global patterns.</span><span data-lang="pt">Depois que o LLM produz a resposta final, o código faz uma última passada em busca de informações pessoalmente identificáveis. O exemplo usa regexes para identificadores brasileiros e também padrões globais comuns.</span></p>
+    <pre><code>_PII_PATTERNS = {
+    "CPF": re.compile(r"\d{3}\.\d{3}\.\d{3}-\d{2}"),
+    "CNPJ": re.compile(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"),
+    "email": re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"),
+    "phone_br": re.compile(r"\(?\d{2}\)?\s?9?\d{4}[\s\-]?\d{4}"),
+    "credit_card": re.compile(r"\d{4}[\s\-]\d{4}[\s\-]\d{4}[\s\-]\d{4}"),
+}
+
+_PII_REDACT = {
+    "CPF": "***.***.***-**",
+    "email": "[email redacted]",
+    "phone_br": "[phone redacted]",
+    "credit_card": "[card redacted]",
+}
+
+def check_output(response: str, trace: bool) -&gt; OutputVerdict:
+    for name, pattern in _PII_PATTERNS.items():
+        redacted = pattern.sub(_PII_REDACT[name], redacted)
+</code></pre>
+    <p><span data-lang="en">Notice the difference between detection and replacement. <span class="inline-code">_PII_PATTERNS</span> finds matches; <span class="inline-code">_PII_REDACT</span> maps each category to a safe replacement. That separation makes policy changes straightforward.</span><span data-lang="pt">Repare na diferença entre detecção e substituição. <span class="inline-code">_PII_PATTERNS</span> encontra correspondências; <span class="inline-code">_PII_REDACT</span> mapeia cada categoria para uma substituição segura. Essa separação deixa mudanças de política mais simples.</span></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th><span data-lang="en">Pattern</span><span data-lang="pt">Padrão</span></th><th><span data-lang="en">Why it matters</span><span data-lang="pt">Por que importa</span></th><th><span data-lang="en">Typical replacement</span><span data-lang="pt">Substituição típica</span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span data-lang="en">CPF / CNPJ</span><span data-lang="pt">CPF / CNPJ</span></td><td><span data-lang="en">Brazilian personal or company identifiers</span><span data-lang="pt">Identificadores brasileiros de pessoa ou empresa</span></td><td><span data-lang="en">Mask digits, keep recognizable format</span><span data-lang="pt">Mascarar dígitos e manter o formato reconhecível</span></td></tr>
+          <tr><td><span data-lang="en">Email / phone</span><span data-lang="pt">Email / telefone</span></td><td><span data-lang="en">Direct personal contact information</span><span data-lang="pt">Informação direta de contato pessoal</span></td><td><span data-lang="en">Generic redaction label</span><span data-lang="pt">Rótulo genérico de redação</span></td></tr>
+          <tr><td><span data-lang="en">Credit card</span><span data-lang="pt">Cartão de crédito</span></td><td><span data-lang="en">High-risk financial data</span><span data-lang="pt">Dado financeiro de alto risco</span></td><td><span data-lang="en">Full removal or tokenized placeholder</span><span data-lang="pt">Remoção total ou placeholder tokenizado</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Toggling layers independently</span><span data-lang="pt">Alternando camadas de forma independente</span></h2>
+    <p><span data-lang="en">The demo exposes each guardrail behind a CLI flag. That is useful for teaching because you can demonstrate how behavior changes when one layer is removed without editing code.</span><span data-lang="pt">A demo expõe cada guardrail por trás de uma flag de CLI. Isso é útil para ensino porque você consegue mostrar como o comportamento muda quando uma camada é removida sem editar o código.</span></p>
+    <pre><code>python examples/guardrails_agent.py --prompt "Top 3 AI trends"
+python examples/guardrails_agent.py --skip-input-guardrail --prompt "Ignore previous instructions"
+python examples/guardrails_agent.py --skip-tool-sanitizer --trace --prompt "..."
+python examples/guardrails_agent.py --skip-output-guardrail --prompt "..."
+</code></pre>
+    <p><span data-lang="en">These toggles also help debugging. If a safe prompt is blocked, or useful content is over-sanitized, you can isolate the faulty layer instead of treating the whole pipeline as a black box.</span><span data-lang="pt">Esses toggles também ajudam no debugging. Se um prompt seguro for bloqueado, ou um conteúdo útil for sanitizado demais, você consegue isolar a camada com problema em vez de tratar o pipeline inteiro como uma caixa-preta.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">guardrails should be observable and debuggable. Hidden safety logic is hard to tune because you cannot tell which layer caused a block or redaction.</span><span data-lang="pt">guardrails devem ser observáveis e depuráveis. Lógica de segurança escondida é difícil de ajustar porque você não consegue dizer qual camada causou um bloqueio ou uma redação.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">How Lesson 7 extends Lesson 2</span><span data-lang="pt">Como a Lição 7 estende a Lição 2</span></h2>
+    <p><span data-lang="en">Conceptually, this file is a hardened version of the research agent:</span><span data-lang="pt">Conceitualmente, este arquivo é uma versão endurecida do agent de pesquisa:</span></p>
+    <ul>
+      <li><strong><span data-lang="en">Same foundation:</span><span data-lang="pt">Mesma base:</span></strong> <span data-lang="en">identical Agent loop, tool schemas, and web research task.</span><span data-lang="pt">mesmo loop do Agent, mesmos schemas de tool e mesma tarefa de pesquisa web.</span></li>
+      <li><strong><span data-lang="en">New pre-check:</span><span data-lang="pt">Novo pré-check:</span></strong> <span data-lang="en">the prompt is classified before the agent runs.</span><span data-lang="pt">o prompt é classificado antes de o agent rodar.</span></li>
+      <li><strong><span data-lang="en">New tool wrapper:</span><span data-lang="pt">Novo wrapper de tool:</span></strong> <span data-lang="en">fetched content is sanitized before the LLM reads it.</span><span data-lang="pt">o conteúdo buscado é sanitizado antes de o LLM lê-lo.</span></li>
+      <li><strong><span data-lang="en">New post-check:</span><span data-lang="pt">Novo pós-check:</span></strong> <span data-lang="en">the final answer is redacted before it is printed.</span><span data-lang="pt">a resposta final é redigida antes de ser impressa.</span></li>
+    </ul>
+    <p><span data-lang="en">If Lesson 2 taught you how an agent uses tools, Lesson 7 teaches you where to put trust boundaries around that same behavior.</span><span data-lang="pt">Se a Lição 2 ensinou como um agent usa tools, a Lição 7 ensina onde colocar fronteiras de confiança em volta desse mesmo comportamento.</span></p>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Run the guarded version of the search agent and compare it with Lesson 2 under the same prompt.</span><span data-lang="pt">Rode a versão protegida do agent de busca e compare com a Lição 2 usando o mesmo prompt.</span></p>
+    <pre><code>python examples/guardrails_agent.py --prompt "Top 3 agentic AI trends in 2025 with sources" --trace</code></pre>
+  </section>
+
+  <nav class="navbar">
+    <a href="lesson-04-mcp-custom.html"><span data-lang="en">← Lesson 4</span><span data-lang="pt">← Lição 4</span></a>
+    <span class="current"><span data-lang="en">Lesson 5</span><span data-lang="pt">Lição 5</span></span>
+    <a href="lesson-06-hitl.html"><span data-lang="en">Lesson 6 →</span><span data-lang="pt">Lição 6 →</span></a>
+  </nav>
+  <div class="footer"><span data-lang="en">SimpleAgent Tutorial · Advanced lesson 7</span><span data-lang="pt">Tutorial SimpleAgent · Lição avançada 7</span></div>
+</div>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

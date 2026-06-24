@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 4: MCP — Building Your Own Server — AI Agents from Scratch</title>
+
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+code, pre { font-family: Consolas, "Courier New", Courier, monospace; }
+.wrapper { max-width: 980px; margin: 0 auto; padding: 24px; }
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 0 0 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--cp-shadow);
+}
+.navbar a { color: var(--cp-link); text-decoration: none; font-weight: 600; }
+.navbar .current { color: var(--cp-text-muted); font-size: 0.95rem; font-weight: 600; }
+.hero, .section, .try-it {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.hero h1 { margin: 0 0 12px; font-size: 2.1rem; line-height: 1.2; }
+.hero p, .section p, .section li, .try-it p, .note, .table-wrap, .diagram-step { color: var(--cp-text-muted); }
+.lead { font-size: 1.02rem; }
+.kicker {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+  color: var(--cp-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+.card { padding: 16px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-bg-elevated); }
+.card h3, .section h2, .section h3, .try-it h2 { margin-top: 0; color: var(--cp-text); }
+.section h2 { margin-bottom: 12px; font-size: 1.45rem; }
+.section h3 { margin-bottom: 8px; font-size: 1.05rem; }
+.note { padding: 12px 14px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface-soft); }
+.key-insight {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--cp-border);
+  border-left: 6px solid var(--cp-accent);
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+}
+.key-insight strong { color: var(--cp-text); }
+pre {
+  margin: 16px 0;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--cp-text);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px; border: 1px solid var(--cp-border); text-align: left; vertical-align: top; }
+th { background: var(--cp-surface-soft); color: var(--cp-text); }
+.diagram { display: grid; gap: 12px; margin: 16px 0; }
+.diagram-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; align-items: stretch; }
+.diagram-step { padding: 14px; border: 1px solid var(--cp-border-strong); border-radius: 0.625rem; background: var(--cp-bg-elevated); text-align: center; }
+.arrow { text-align: center; color: var(--cp-text-soft); font-weight: 700; }
+.inline-code { display: inline-block; padding: 2px 8px; border-radius: 0.625rem; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text); }
+.footer { padding: 20px 0 8px; color: var(--cp-text-soft); text-align: center; font-size: 0.9rem; }
+@media (max-width: 720px) {
+  .wrapper { padding: 16px; }
+  .navbar { flex-direction: column; align-items: flex-start; }
+  .hero h1 { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <nav class="navbar">
+    <a href="lesson-03-mcp-external.html"><span data-lang="en">← Lesson 3</span><span data-lang="pt">← Lição 3</span></a>
+    <span class="current"><span data-lang="en">Lesson 4</span><span data-lang="pt">Lição 4</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="lang-switcher" id="langSwitcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="lesson-05-guardrails.html"><span data-lang="en">Lesson 5 →</span><span data-lang="pt">Lição 5 →</span></a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="kicker"><span data-lang="en">Advanced · MCP</span><span data-lang="pt">Avançado · MCP</span></div>
+    <h1><span data-lang="en">Lesson 4: MCP — Building Your Own Server</span><span data-lang="pt">Lição 4: MCP — Construindo seu Próprio Servidor</span></h1>
+    <p class="lead"><span data-lang="en">Lesson 3 proved that an agent can consume external MCP tools. Lesson 4 shows the other side of the contract: you can publish your own tools behind an MCP server and keep the agent almost unchanged. The example combines <span class="inline-code">examples/mcp_local_db_agent.py</span> with <span class="inline-code">mcp_servers/inventory_server.py</span>.</span><span data-lang="pt">A Lição 3 provou que um agent pode consumir tools MCP externas. A Lição 4 mostra o outro lado do contrato: você pode publicar suas próprias tools atrás de um servidor MCP e manter o agent quase inalterado. O exemplo combina <span class="inline-code">examples/mcp_local_db_agent.py</span> com <span class="inline-code">mcp_servers/inventory_server.py</span>.</span></p>
+    <h3><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h3>
+    <ul>
+      <li><span data-lang="en">How to build a FastMCP server with <span class="inline-code">@mcp.tool()</span> decorators.</span><span data-lang="pt">Como construir um servidor FastMCP com decorators <span class="inline-code">@mcp.tool()</span>.</span></li>
+      <li><span data-lang="en">How SQLite becomes a reusable tool backend.</span><span data-lang="pt">Como SQLite vira um backend reutilizável para tools.</span></li>
+      <li><span data-lang="en">How to design MCP tools for query, mutation, and statistics.</span><span data-lang="pt">Como desenhar tools MCP para consulta, mutação e estatísticas.</span></li>
+      <li><span data-lang="en">Why the consuming agent looks almost identical to Lesson 3.</span><span data-lang="pt">Por que o agent consumidor parece quase idêntico ao da Lição 3.</span></li>
+    </ul>
+    <p class="note"><strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <span data-lang="en">Read Lesson 3 first. This lesson intentionally reuses the same client pattern so you can focus on what changes on the server side.</span><span data-lang="pt">Leia a Lição 3 primeiro. Esta lição reutiliza de propósito o mesmo padrão de cliente para você focar no que muda do lado do servidor.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The main idea: your database becomes a protocol service</span><span data-lang="pt">A ideia principal: seu banco vira um serviço de protocolo</span></h2>
+    <p><span data-lang="en">Instead of writing business logic directly inside the agent file, the project exposes inventory operations through an MCP server. Any compliant client could connect to that server, not just this tutorial agent.</span><span data-lang="pt">Em vez de escrever a lógica de negócio direto no arquivo do agent, o projeto expõe operações de inventário por um servidor MCP. Qualquer cliente compatível pode se conectar a esse servidor, não só este agent do tutorial.</span></p>
+    <div class="diagram">
+      <div class="diagram-row">
+        <div class="diagram-step"><strong>SQLite DB</strong><br><span data-lang="en">Persistent product data</span><span data-lang="pt">Dados persistentes de produtos</span></div>
+        <div class="diagram-step"><strong>FastMCP Server</strong><br><span data-lang="en">Decorated Python tools</span><span data-lang="pt">Tools Python com decorators</span></div>
+        <div class="diagram-step"><strong>MCPAgentClient</strong><br><span data-lang="en">Discovery + adapters</span><span data-lang="pt">Discovery + adapters</span></div>
+        <div class="diagram-step"><strong>Agent</strong><br><span data-lang="en">Natural language interface</span><span data-lang="pt">Interface em linguagem natural</span></div>
+      </div>
+    </div>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">MCP is not only for consuming third-party services. It is also a clean way to publish your own internal systems as model-usable tools.</span><span data-lang="pt">MCP não serve só para consumir serviços de terceiros. Ele também é uma forma limpa de publicar seus próprios sistemas internos como tools utilizáveis por modelo.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Bootstrapping the server with FastMCP</span><span data-lang="pt">Inicializando o servidor com FastMCP</span></h2>
+    <p><span data-lang="en">The server starts with a tiny amount of framework code. <span class="inline-code">FastMCP</span> provides the runtime, and decorators register Python functions as tools.</span><span data-lang="pt">O servidor começa com uma quantidade pequena de código de framework. <span class="inline-code">FastMCP</span> fornece o runtime, e decorators registram funções Python como tools.</span></p>
+    <pre><code>from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Inventory", json_response=True)
+
+@mcp.tool()
+def query_products(...):
+    ...
+
+@mcp.tool()
+def get_stats() -&gt; dict:
+    ...
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
+</code></pre>
+    <p><span data-lang="en"><span class="inline-code">json_response=True</span> is convenient because it encourages each tool to return structured data that the agent can reason over. The stdio transport keeps the server compatible with the client pattern from Lesson 3.</span><span data-lang="pt"><span class="inline-code">json_response=True</span> é conveniente porque incentiva cada tool a retornar dados estruturados sobre os quais o agent consegue raciocinar. O transporte stdio mantém o servidor compatível com o padrão de cliente da Lição 3.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">SQLite as the backing store</span><span data-lang="pt">SQLite como camada de armazenamento</span></h2>
+    <p><span data-lang="en">The file auto-creates a local database and seeds it with sample products the first time it runs. That keeps the example reproducible: you launch the server and already have data to query.</span><span data-lang="pt">O arquivo cria automaticamente um banco local e o preenche com produtos de exemplo na primeira execução. Isso deixa o exemplo reproduzível: você sobe o servidor e já tem dados para consultar.</span></p>
+    <pre><code>DB_PATH = Path(__file__).parent / "inventory.db"
+
+def _get_db() -&gt; sqlite3.Connection:
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def _init_db() -&gt; None:
+    if DB_PATH.exists():
+        return
+    conn = _get_db()
+    conn.executescript("""
+        CREATE TABLE products (...);
+        INSERT INTO products (name, category, price, stock, description) VALUES
+            ('Wireless Mouse', 'Electronics', 29.99, 150, 'Ergonomic wireless mouse'),
+            ('Standing Desk', 'Furniture', 399.99, 30, 'Electric height-adjustable desk');
+    """)
+</code></pre>
+    <p><span data-lang="en">For teaching, SQLite is perfect: no external dependency, real SQL, and persistent enough to demonstrate both reads and writes.</span><span data-lang="pt">Para ensinar, SQLite é perfeito: sem dependência externa, SQL real e persistente o bastante para demonstrar leituras e escritas.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Tool design for databases</span><span data-lang="pt">Design de tools para bancos de dados</span></h2>
+    <p><span data-lang="en">The server exposes four useful categories of operations:</span><span data-lang="pt">O servidor expõe quatro categorias úteis de operações:</span></p>
+    <div class="lesson-grid">
+      <div class="card">
+        <h3><span data-lang="en">Query</span><span data-lang="pt">Query</span></h3>
+        <p><span data-lang="en"><span class="inline-code">query_products()</span> filters rows by search text, category, price range, and low-stock mode.</span><span data-lang="pt"><span class="inline-code">query_products()</span> filtra linhas por texto de busca, categoria, faixa de preço e modo de baixo estoque.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">Create</span><span data-lang="pt">Create</span></h3>
+        <p><span data-lang="en"><span class="inline-code">add_product()</span> inserts a new row and returns the new identifier.</span><span data-lang="pt"><span class="inline-code">add_product()</span> insere uma nova linha e retorna o novo identificador.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">Update</span><span data-lang="pt">Update</span></h3>
+        <p><span data-lang="en"><span class="inline-code">update_stock()</span> adjusts inventory counts and prevents negative stock.</span><span data-lang="pt"><span class="inline-code">update_stock()</span> ajusta contagens de inventário e evita estoque negativo.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">Stats</span><span data-lang="pt">Stats</span></h3>
+        <p><span data-lang="en"><span class="inline-code">get_stats()</span> returns aggregates such as totals, categories, and low-stock items.</span><span data-lang="pt"><span class="inline-code">get_stats()</span> retorna agregados como totais, categorias e itens com baixo estoque.</span></p>
+      </div>
+    </div>
+    <p><span data-lang="en">This mix is intentional. A realistic data toolset is not just “query everything.” Agents need targeted operations with sensible constraints.</span><span data-lang="pt">Essa mistura é intencional. Um conjunto realista de tools de dados não é só “consultar tudo”. Agents precisam de operações direcionadas com restrições sensatas.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Dynamic SQL in <span class="inline-code">query_products()</span></span><span data-lang="pt">SQL dinâmico em <span class="inline-code">query_products()</span></span></h2>
+    <p><span data-lang="en">The query tool is a good example of parameterized, composable filters. It starts with a base query and adds clauses only when corresponding arguments are provided.</span><span data-lang="pt">A tool de query é um bom exemplo de filtros parametrizados e componíveis. Ela começa com uma consulta base e adiciona cláusulas só quando os argumentos correspondentes são fornecidos.</span></p>
+    <pre><code>@mcp.tool()
+def query_products(search=None, category=None, min_price=None, max_price=None, low_stock_only=False):
+    conn = _get_db()
+    query = "SELECT * FROM products WHERE 1=1"
+    params: list = []
+
+    if search:
+        query += " AND (LOWER(name) LIKE ? OR LOWER(description) LIKE ?)"
+        params.extend([f"%{search.lower()}%", f"%{search.lower()}%"])
+    if category:
+        query += " AND LOWER(category) = ?"
+        params.append(category.lower())
+    if min_price is not None:
+        query += " AND price &gt;= ?"
+        params.append(min_price)
+    if max_price is not None:
+        query += " AND price &lt;= ?"
+        params.append(max_price)
+    if low_stock_only:
+        query += " AND stock &lt; 50"
+
+    rows = conn.execute(query + " ORDER BY name", params).fetchall()
+    return [dict(row) for row in rows]
+</code></pre>
+    <p><span data-lang="en">Because the tool exposes well-named arguments, the LLM does not have to invent SQL itself. It only needs to map user intent into structured parameters.</span><span data-lang="pt">Como a tool expõe argumentos bem nomeados, o LLM não precisa inventar SQL por conta própria. Ele só precisa mapear a intenção do usuário em parâmetros estruturados.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">good MCP tools expose the right level of abstraction. Let the database layer own SQL; let the model choose filter arguments.</span><span data-lang="pt">boas tools MCP expõem o nível certo de abstração. Deixe a camada de banco ser dona do SQL; deixe o modelo escolher os argumentos de filtro.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Mutation tools with safe return values</span><span data-lang="pt">Tools de mutação com valores de retorno seguros</span></h2>
+    <p><span data-lang="en">Write operations return structured status objects rather than plain strings. That makes it easier for the agent to confirm outcomes and detect failures.</span><span data-lang="pt">Operações de escrita retornam objetos de status estruturados em vez de strings simples. Isso facilita para o agent confirmar resultados e detectar falhas.</span></p>
+    <pre><code>@mcp.tool()
+def add_product(name: str, category: str, price: float, stock: int = 0, description: str = "") -&gt; dict:
+    ...
+    return {
+        "success": True,
+        "product_id": product_id,
+        "message": f"Product '{name}' added with ID {product_id}.",
+    }
+
+@mcp.tool()
+def update_stock(product_id: int, quantity_change: int) -&gt; dict:
+    ...
+    if new_stock &lt; 0:
+        return {"success": False, "error": "Cannot reduce stock below 0."}
+    return {
+        "success": True,
+        "product": row["name"],
+        "previous_stock": row["stock"],
+        "new_stock": new_stock,
+    }
+</code></pre>
+    <p><span data-lang="en">This mirrors the structured tool outputs from earlier lessons. MCP gives you a transport standard, but tool ergonomics still depend on thoughtful API design.</span><span data-lang="pt">Isso espelha as saídas estruturadas de tool das lições anteriores. MCP dá a você um padrão de transporte, mas a ergonomia das tools ainda depende de um design de API bem pensado.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Aggregates with <span class="inline-code">get_stats()</span></span><span data-lang="pt">Agregados com <span class="inline-code">get_stats()</span></span></h2>
+    <p><span data-lang="en">Agents often need summaries, not just rows. The stats tool pre-computes totals and grouped breakdowns so the model can explain the inventory instead of manually aggregating many query results.</span><span data-lang="pt">Agents muitas vezes precisam de resumos, não só linhas. A tool de stats pré-computa totais e agrupamentos para o modelo explicar o inventário em vez de agregar manualmente muitos resultados de query.</span></p>
+    <pre><code>@mcp.tool()
+def get_stats() -&gt; dict:
+    total = conn.execute("SELECT COUNT(*) as count, SUM(price * stock) as value FROM products").fetchone()
+    categories = conn.execute(
+        "SELECT category, COUNT(*) as count, SUM(stock) as total_stock FROM products GROUP BY category ORDER BY category"
+    ).fetchall()
+    low_stock = conn.execute(
+        "SELECT name, stock, category FROM products WHERE stock &lt; 50 ORDER BY stock"
+    ).fetchall()
+    return {
+        "total_products": total["count"],
+        "total_inventory_value": round(total["value"] or 0, 2),
+        "categories": [dict(row) for row in categories],
+        "low_stock_items": [dict(row) for row in low_stock],
+    }
+</code></pre>
+    <p><span data-lang="en">This is a strong pattern for business systems: push repetitive aggregation into tools so the model can spend its reasoning budget on explanation and decision support.</span><span data-lang="pt">Este é um padrão forte para sistemas de negócio: empurre agregações repetitivas para tools para o modelo gastar seu orçamento de raciocínio com explicação e apoio à decisão.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The agent file is almost unchanged — and that is the point</span><span data-lang="pt">O arquivo do agent está quase inalterado — e esse é o ponto</span></h2>
+    <p><span data-lang="en">The consumer in <span class="inline-code">mcp_local_db_agent.py</span> differs from Lesson 3 mostly in the server command. Instead of launching <span class="inline-code">duckduckgo-mcp-server</span>, it launches your local Python file.</span><span data-lang="pt">O consumidor em <span class="inline-code">mcp_local_db_agent.py</span> difere da Lição 3 principalmente no comando do servidor. Em vez de iniciar <span class="inline-code">duckduckgo-mcp-server</span>, ele inicia seu arquivo Python local.</span></p>
+    <pre><code>SERVER_PATH = str(Path(__file__).resolve().parent.parent / "mcp_servers" / "inventory_server.py")
+
+server_params = StdioServerParameters(
+    command=sys.executable,
+    args=[SERVER_PATH],
+)
+
+async with MCPAgentClient(server_params) as mcp:
+    tools, registry = mcp.get_tools(loop)
+    agent = Agent(client=client, system=SYSTEM_PROMPT, tools=tools, tool_registry=registry)
+    result = await asyncio.to_thread(agent.execute, prompt)
+</code></pre>
+    <p><span data-lang="en">This near-identity with Lesson 3 is the lesson. Once both servers speak MCP, the client integration pattern stays stable.</span><span data-lang="pt">Essa quase identidade com a Lição 3 é a própria lição. Depois que ambos os servidores falam MCP, o padrão de integração do cliente permanece estável.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">MCP lets you invest once in agent-side plumbing and reuse it across many internal services.</span><span data-lang="pt">MCP deixa você investir uma vez no plumbing do lado do agent e reutilizar isso em vários serviços internos.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">What's next</span><span data-lang="pt">O que vem depois</span></h2>
+    <p><span data-lang="en">Once you understand this server, you can extend it in several directions:</span><span data-lang="pt">Depois de entender este servidor, você pode estendê-lo em várias direções:</span></p>
+    <ul>
+      <li><span data-lang="en">Add HTTP transport for remote access instead of local stdio.</span><span data-lang="pt">Adicionar transporte HTTP para acesso remoto em vez de stdio local.</span></li>
+      <li><span data-lang="en">Introduce authentication and authorization per tool or per server.</span><span data-lang="pt">Introduzir autenticação e autorização por tool ou por servidor.</span></li>
+      <li><span data-lang="en">Swap SQLite for Postgres, vector search, or a domain-specific API.</span><span data-lang="pt">Trocar SQLite por Postgres, vector search ou uma API específica de domínio.</span></li>
+      <li><span data-lang="en">Run multiple MCP servers and let one agent discover tools from all of them.</span><span data-lang="pt">Rodar vários servidores MCP e deixar um agent descobrir tools de todos eles.</span></li>
+      <li><span data-lang="en">Combine this with Lesson 5 guardrails or Lesson 6 approval gates for safer mutations.</span><span data-lang="pt">Combinar isso com os guardrails da Lição 5 ou os gates de aprovação da Lição 6 para mutações mais seguras.</span></li>
+    </ul>
+    <p><span data-lang="en">The protocol stays the same even as the backend becomes more serious.</span><span data-lang="pt">O protocolo continua o mesmo mesmo quando o backend fica mais robusto.</span></p>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Run your custom inventory server through the MCP-powered agent and ask for a real inventory summary.</span><span data-lang="pt">Rode seu servidor de inventário customizado pelo agent com MCP e peça um resumo real do inventário.</span></p>
+    <pre><code>python examples/mcp_local_db_agent.py --prompt "Give me an overview of the inventory: how many products, what categories, and which items are low on stock?" --trace</code></pre>
+  </section>
+
+  <nav class="navbar">
+    <a href="lesson-03-mcp-external.html"><span data-lang="en">← Lesson 3</span><span data-lang="pt">← Lição 3</span></a>
+    <span class="current"><span data-lang="en">Lesson 4</span><span data-lang="pt">Lição 4</span></span>
+    <a href="lesson-05-guardrails.html"><span data-lang="en">Lesson 5 →</span><span data-lang="pt">Lição 5 →</span></a>
+  </nav>
+  <div class="footer"><span data-lang="en">SimpleAgent Tutorial · Advanced lesson 10</span><span data-lang="pt">Tutorial SimpleAgent · Lição avançada 10</span></div>
+</div>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

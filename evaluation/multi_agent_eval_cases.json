@@ -1,0 +1,50 @@
+[
+  {
+    "id": "weather_paris",
+    "prompt": "What is the weather in Paris?",
+    "expected_agents": ["weather-agent"],
+    "required_substrings": ["paris", "75"],
+    "forbidden_substrings": [],
+    "min_answer_chars": 20
+  },
+  {
+    "id": "weather_tokyo",
+    "prompt": "Please tell me the weather in Tokyo today.",
+    "expected_agents": ["weather-agent"],
+    "required_substrings": ["tokyo", "73"],
+    "forbidden_substrings": [],
+    "min_answer_chars": 20
+  },
+  {
+    "id": "search_agentic_trends",
+    "prompt": "What are the top agentic AI trends in 2025?",
+    "expected_agents": ["search-agent"],
+    "required_substrings": [],
+    "forbidden_substrings": [],
+    "min_answer_chars": 120
+  },
+  {
+    "id": "search_definition",
+    "prompt": "What is agentic AI?",
+    "expected_agents": ["search-agent"],
+    "required_substrings": [],
+    "forbidden_substrings": [],
+    "min_answer_chars": 80
+  },
+  {
+    "id": "combined_tokyo_and_trends",
+    "prompt": "What's the weather in Tokyo, and also summarize the latest agentic AI trends?",
+    "expected_agents": ["weather-agent", "search-agent"],
+    "required_substrings": ["tokyo"],
+    "forbidden_substrings": [],
+    "min_answer_chars": 140
+  },
+  {
+    "id": "combined_paris_and_search",
+    "prompt": "Give me the weather in Paris and then explain current agentic AI trends.",
+    "expected_agents": ["weather-agent", "search-agent"],
+    "required_substrings": ["paris"],
+    "forbidden_substrings": [],
+    "min_answer_chars": 140
+  }
+]

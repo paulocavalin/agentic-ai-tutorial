@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+mcp_servers/inventory.db
+.DS_Store

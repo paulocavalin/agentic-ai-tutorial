@@ -1,0 +1,25 @@
+{
+  "type": "function",
+  "function": {
+    "name": "web_search",
+    "description": "Search the web and return relevant results with title, URL, and snippet.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query to run on the web."
+        },
+        "max_results": {
+          "type": "integer",
+          "description": "Maximum number of results to return.",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  }
+}

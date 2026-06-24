@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  box-shadow: var(--cp-shadow);
+}
+.lesson-nav a,
+.lesson-nav span {
+  text-decoration: none;
+  color: var(--cp-text);
+  font-weight: 600;
+}
+.lesson-nav .muted {
+  color: var(--cp-text-muted);
+  font-weight: 500;
+}
+.hero,
+.section,
+.try-it,
+.comparison-table {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--cp-shadow);
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--cp-accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+h1, h2, h3 { line-height: 1.2; }
+h1 { margin: 0 0 12px; font-size: 2.2rem; }
+h2 { margin: 0 0 14px; font-size: 1.35rem; }
+h3 { margin: 24px 0 10px; font-size: 1.05rem; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px 20px; padding: 0; }
+li { margin-bottom: 8px; }
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.card,
+.callout,
+.note,
+.step-list,
+.mini-card {
+  background: var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 18px;
+}
+.callout {
+  border-left: 6px solid var(--cp-accent);
+}
+.note {
+  border-left: 6px solid var(--cp-warning);
+}
+pre code {
+  display: block;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+code,
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+}
+.file-ref {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 0.625rem;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  color: var(--cp-text-soft);
+}
+.caption {
+  margin: 0 0 10px;
+  color: var(--cp-text-muted);
+  font-size: 0.95rem;
+}
+.annotations {
+  margin-top: 12px;
+}
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+th,
+td {
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--cp-surface-soft);
+}
+.footer-space { margin-top: 12px; }
+@media (max-width: 720px) {
+  .page { padding: 16px; }
+  .lesson-nav { flex-direction: column; align-items: flex-start; }
+  h1 { font-size: 1.9rem; }
+}
+</style>
+<title>Lesson 10 — Context &amp; Memory Management — AI Agents from Scratch</title>
+</head>
+<body>
+<div class="page">
+  <nav class="lesson-nav">
+    <a href="lesson-09-extraction.html"><span data-lang="en">← Lesson 9</span><span data-lang="pt">← Lição 9</span></a>
+    <span class="muted"><span data-lang="en">Lesson 10</span><span data-lang="pt">Lição 10</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="lang-switcher" id="langSwitcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="index.html"><span data-lang="en">All Lessons →</span><span data-lang="pt">Todas as Lições →</span></a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow"><span data-lang="en">Lesson 10</span><span data-lang="pt">Lição 10</span></p>
+    <h1>
+      <span data-lang="en">Context &amp; Memory Management</span>
+      <span data-lang="pt">Contexto &amp; Gestão de Memória</span>
+    </h1>
+    <p>
+      <span data-lang="en">Source: <span class="file-ref">examples/memory_agent.py</span></span>
+      <span data-lang="pt">Fonte: <span class="file-ref">examples/memory_agent.py</span></span>
+    </p>
+    <div class="grid two">
+      <div class="card">
+        <h2><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h2>
+        <ul>
+          <li><span data-lang="en">Why unbounded history eventually hurts model quality.</span><span data-lang="pt">Por que um histórico sem limite acaba prejudicando a qualidade do modelo.</span></li>
+          <li><span data-lang="en">How a rolling summary keeps recent context compact.</span><span data-lang="pt">Como um resumo incremental mantém o contexto recente compacto.</span></li>
+          <li><span data-lang="en">How a tiny key-value memory store preserves facts across turns.</span><span data-lang="pt">Como uma pequena memória chave-valor preserva fatos entre turnos.</span></li>
+          <li><span data-lang="en">Why this example uses custom lightweight agent classes instead of <code>core.Agent</code>.</span><span data-lang="pt">Por que este exemplo usa classes leves e customizadas em vez de <code>core.Agent</code>.</span></li>
+        </ul>
+      </div>
+      <div class="note">
+        <strong><span data-lang="en">Prerequisites.</span><span data-lang="pt">Pré-requisitos.</span></strong>
+        <p><span data-lang="en">Lessons 1-5 focused on tool-calling workflows. This lesson zooms out to a broader problem: even a perfect loop degrades if you keep stuffing every past message into the prompt forever.</span><span data-lang="pt">As lições 1 a 5 focaram em fluxos com tool calling. Esta lição amplia o olhar para um problema maior: até um loop perfeito degrada se você continuar enfiando todas as mensagens passadas no prompt para sempre.</span></p>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <h2><span data-lang="en">The context window problem</span><span data-lang="pt">O problema da janela de contexto</span></h2>
+    <p><span data-lang="en">Large language models only see the tokens you send on each call. If conversation history grows without bound, prompts become expensive, noisy, and easier for the model to forget the most relevant facts.</span><span data-lang="pt">Large language models só enxergam os tokens que você envia em cada chamada. Se o histórico cresce sem limite, os prompts ficam caros, ruidosos e facilitam que o modelo esqueça os fatos mais relevantes.</span></p>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">Memory management is not just about recall. It is also about prompt hygiene: keep the context small enough that the model can still focus.</span><span data-lang="pt">Gestão de memória não é só sobre lembrar. Também é higiene de prompt: mantenha o contexto pequeno o suficiente para o modelo continuar focado.</span></p>
+    </div>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">Failure mode</span><span data-lang="pt">Modo problemático</span></h3>
+        <p><span data-lang="en">Append-only history keeps everything, even details that no longer matter.</span><span data-lang="pt">Um histórico só de append guarda tudo, até detalhes que já não importam.</span></p>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">Managed mode</span><span data-lang="pt">Modo gerenciado</span></h3>
+        <p><span data-lang="en">Compress old turns into summary text and preserve only durable facts in a memory store.</span><span data-lang="pt">Comprima turnos antigos em um resumo e preserve só fatos duráveis em uma memória.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">1) NaiveAgent: the simplest possible approach</span><span data-lang="pt">1) NaiveAgent: a abordagem mais simples possível</span></h2>
+    <p class="caption"><span data-lang="en">This class is intentionally small so the trade-off is obvious.</span><span data-lang="pt">Esta classe é pequena de propósito para deixar o trade-off óbvio.</span></p>
+    <pre><code>NAIVE_SYSTEM = (
+    "You are a helpful assistant. "
+    "Answer questions clearly and concisely."
+)
+
+@dataclass
+class NaiveAgent:
+    model: str
+    history: List[Dict] = field(default_factory=list)
+
+    def chat(self, user_input: str) -> str:
+        self.history.append({"role": "user", "content": user_input})
+        messages = [{"role": "system", "content": NAIVE_SYSTEM}] + self.history
+        response = _chat(messages, self.model)
+        self.history.append({"role": "assistant", "content": response})
+        return response
+
+    @property
+    def context_messages(self) -> int:
+        return len(self.history)</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">Every turn appends two more messages: user + assistant.</span><span data-lang="pt">Cada turno adiciona mais duas mensagens: usuário + assistant.</span></li>
+      <li><span data-lang="en">Nothing is summarized, discarded, or extracted into durable memory.</span><span data-lang="pt">Nada é resumido, descartado ou extraído para uma memória durável.</span></li>
+      <li><span data-lang="en">It is easy to understand and easy to outgrow.</span><span data-lang="pt">É fácil de entender e fácil de ficar pequeno demais.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">2) ManagedAgent adds two compression layers</span><span data-lang="pt">2) ManagedAgent adiciona duas camadas de compressão</span></h2>
+    <pre><code>@dataclass
+class ManagedAgent:
+    model: str
+    session_name: str = "default"
+    summary: str = ""
+    recent: List[Dict] = field(default_factory=list)
+    memory_store: Dict[str, str] = field(default_factory=dict)
+
+    def chat(self, user_input: str) -> str:
+        memory_block = ""
+        if self.memory_store:
+            items = "\n".join(f"  {k}: {v}" for k, v in self.memory_store.items())
+            memory_block = f"\n\n[Long-term memory]\n{items}"
+
+        system_content = MANAGED_SYSTEM + memory_block
+        if self.summary:
+            system_content += f"\n\n[Conversation summary so far]\n{self.summary}"
+
+        messages = [{"role": "system", "content": system_content}]
+        messages += self.recent
+        messages.append({"role": "user", "content": user_input})
+
+        response = _chat(messages, self.model)
+        for mem in _extract_memories(response):
+            self.remember(mem["key"], mem["value"])
+        self.recent.append({"role": "user", "content": user_input})
+        self.recent.append({"role": "assistant", "content": response})
+        self._maybe_summarise()
+        self._save()
+        return response</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><code>summary</code> stores compressed history.</span><span data-lang="pt"><code>summary</code> guarda o histórico comprimido.</span></li>
+      <li><span data-lang="en"><code>recent</code> keeps only the latest full-fidelity turns.</span><span data-lang="pt"><code>recent</code> mantém só os turnos mais recentes em fidelidade completa.</span></li>
+      <li><span data-lang="en"><code>memory_store</code> preserves named facts such as the user's city or job title.</span><span data-lang="pt"><code>memory_store</code> preserva fatos nomeados, como a cidade do usuário ou seu cargo.</span></li>
+      <li><span data-lang="en"><code>_save()</code> persists state after every response.</span><span data-lang="pt"><code>_save()</code> persiste o estado depois de cada resposta.</span></li>
+    </ul>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">Managed context is not one trick. It is the combination of short-term memory (<code>recent</code>), compressed memory (<code>summary</code>), and durable memory (<code>memory_store</code>).</span><span data-lang="pt">Contexto gerenciado não é um truque só. É a combinação de memória de curto prazo (<code>recent</code>), memória comprimida (<code>summary</code>) e memória durável (<code>memory_store</code>).</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">3) Summarization kicks in after a threshold</span><span data-lang="pt">3) A sumarização entra em ação depois de um limite</span></h2>
+    <p><span data-lang="en">The file defines <code>SUMMARY_THRESHOLD = 6</code> and <code>SUMMARY_KEEP = 2</code>. Once enough recent messages accumulate, the agent compresses older ones and keeps only the most recent pair(s) in full.</span><span data-lang="pt">O arquivo define <code>SUMMARY_THRESHOLD = 6</code> e <code>SUMMARY_KEEP = 2</code>. Quando mensagens recentes suficientes se acumulam, o agent comprime as mais antigas e mantém só o(s) par(es) mais recente(s) por completo.</span></p>
+    <pre><code>SUMMARISE_SYSTEM = (
+    "You are a conversation summariser. "
+    "Create a concise but complete summary of the conversation below. "
+    "Preserve all factual details about the user (name, job, goals, preferences). "
+    "Output only the summary text, no preamble."
+)
+
+
+def _maybe_summarise(self) -> None:
+    if len(self.recent) &lt; SUMMARY_THRESHOLD:
+        return
+    to_compress = self.recent[:-SUMMARY_KEEP]
+    keep = self.recent[-SUMMARY_KEEP:]
+
+    history_text = "\n".join(
+        f"{m['role'].upper()}: {m['content']}" for m in to_compress
+    )
+    prefix = f"Existing summary:\n{self.summary}\n\n" if self.summary else ""
+    self.summary = _chat(
+        [
+            {"role": "system", "content": SUMMARISE_SYSTEM},
+            {"role": "user", "content": f"{prefix}New conversation:\n{history_text}"},
+        ],
+        self.model,
+    )
+    self.recent = keep</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">The threshold prevents summarizing on every single turn.</span><span data-lang="pt">O limite evita resumir a cada turno.</span></li>
+      <li><span data-lang="en">The existing summary is fed back in, so summarization is incremental.</span><span data-lang="pt">O resumo existente volta para a entrada, então a sumarização é incremental.</span></li>
+      <li><span data-lang="en">Keeping the newest messages verbatim preserves local conversational nuance.</span><span data-lang="pt">Manter as mensagens mais novas literalmente preserva nuances locais da conversa.</span></li>
+    </ul>
+    <div class="note">
+      <strong><span data-lang="en">⚠️ Note</span><span data-lang="pt">⚠️ Nota</span></strong>
+      <p><span data-lang="en">The code makes two LLM calls in this method, but only the second one is assigned to <code>self.summary</code>. That is fine for the tutorial's explanation: the important concept is the threshold-triggered compression step.</span><span data-lang="pt">O código faz duas chamadas de LLM neste método, mas só a segunda é atribuída a <code>self.summary</code>. Tudo bem para a explicação do tutorial: o conceito importante é a etapa de compressão acionada pelo limite.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">4) Memory extraction is intentionally lightweight</span><span data-lang="pt">4) A extração de memória é propositalmente leve</span></h2>
+    <p><span data-lang="en">The managed agent does not use tool calling here. Instead, it lets the assistant emit <code>remember(key, value)</code> text patterns and parses them with a regex.</span><span data-lang="pt">O agent gerenciado não usa tool calling aqui. Em vez disso, ele deixa o assistant emitir padrões de texto <code>remember(key, value)</code> e faz o parse com regex.</span></p>
+    <pre><code>def _extract_memories(text: str) -> List[Dict[str, str]]:
+    """Parse remember(key, value) calls from assistant response."""
+    import re
+    hits = re.findall(
+        r'remember\(\s*["']?([^"'(),]+)["']?\s*,\s*["']?([^"'()]+)["']?\s*\)',
+        text
+    )
+    return [{"key": k.strip(), "value": v.strip()} for k, v in hits]</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">This is less formal than tool calling, but very easy to demo.</span><span data-lang="pt">Isso é menos formal que tool calling, mas muito fácil de demonstrar.</span></li>
+      <li><span data-lang="en">The assistant can proactively mark useful facts during normal conversation.</span><span data-lang="pt">O assistant pode marcar fatos úteis proativamente durante a conversa normal.</span></li>
+      <li><span data-lang="en">After parsing, those facts are stored in a real Python dictionary for later turns.</span><span data-lang="pt">Depois do parse, esses fatos são guardados em um dicionário Python real para turnos futuros.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">5) Session persistence makes memory survive process restarts</span><span data-lang="pt">5) A persistência de sessão faz a memória sobreviver a reinícios do processo</span></h2>
+    <pre><code>SESSIONS_DIR = Path.home() / ".ollama_memory_sessions"
+
+
+def _save(self) -> None:
+    data = {
+        "summary": self.summary,
+        "recent": self.recent,
+        "memory_store": self.memory_store,
+    }
+    self._path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+
+
+def _load(self) -> None:
+    data = json.loads(self._path.read_text())
+    self.summary = data.get("summary", "")
+    self.recent = data.get("recent", [])
+    self.memory_store = data.get("memory_store", {})</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">The session file is just JSON, which keeps the persistence story transparent.</span><span data-lang="pt">O arquivo de sessão é só JSON, o que deixa a persistência bem transparente.</span></li>
+      <li><span data-lang="en">Summary, recent messages, and memory store all survive between runs.</span><span data-lang="pt">Resumo, mensagens recentes e memória sobrevivem entre execuções.</span></li>
+      <li><span data-lang="en">This is enough to demonstrate long-term continuity without introducing a database.</span><span data-lang="pt">Isso já basta para demonstrar continuidade de longo prazo sem introduzir um banco de dados.</span></li>
+    </ul>
+  </section>
+
+  <section class="section comparison-table">
+    <h2><span data-lang="en">6) Side-by-side growth: naive vs. managed</span><span data-lang="pt">6) Crescimento lado a lado: naive vs. managed</span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><span data-lang="en">Aspect</span><span data-lang="pt">Aspecto</span></th>
+            <th>NaiveAgent</th>
+            <th>ManagedAgent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span data-lang="en">History strategy</span><span data-lang="pt">Estratégia de histórico</span></td>
+            <td><span data-lang="en">Append everything forever.</span><span data-lang="pt">Dá append em tudo para sempre.</span></td>
+            <td><span data-lang="en">Keep summary + recent tail + key facts.</span><span data-lang="pt">Mantém resumo + cauda recente + fatos-chave.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Context growth</span><span data-lang="pt">Crescimento do contexto</span></td>
+            <td><span data-lang="en">Roughly linear with every turn.</span><span data-lang="pt">Quase linear a cada turno.</span></td>
+            <td><span data-lang="en">Bounded after summarization starts.</span><span data-lang="pt">Fica limitado depois que a sumarização começa.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Long-term recall</span><span data-lang="pt">Recall de longo prazo</span></td>
+            <td><span data-lang="en">Only if old turns still fit in context.</span><span data-lang="pt">Só se os turnos antigos ainda couberem no contexto.</span></td>
+            <td><span data-lang="en">Explicit via <code>memory_store</code>.</span><span data-lang="pt">Explícito via <code>memory_store</code>.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Persistence</span><span data-lang="pt">Persistência</span></td>
+            <td><span data-lang="en">None.</span><span data-lang="pt">Nenhuma.</span></td>
+            <td><span data-lang="en">JSON session file.</span><span data-lang="pt">Arquivo de sessão em JSON.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="footer-space"><span data-lang="en">The comparison mode in the script prints actual message counts and character counts so you can see the compression effect directly.</span><span data-lang="pt">O modo de comparação do script imprime a contagem real de mensagens e caracteres para você ver o efeito da compressão diretamente.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Why this example does not use <code>core.Agent</code></span><span data-lang="pt">Por que este exemplo não usa <code>core.Agent</code></span></h2>
+    <p><span data-lang="en">This file uses custom <code>NaiveAgent</code> and <code>ManagedAgent</code> classes with direct HTTP calls through <code>requests</code>. That is a deliberate teaching choice.</span><span data-lang="pt">Este arquivo usa classes customizadas <code>NaiveAgent</code> e <code>ManagedAgent</code> com chamadas HTTP diretas via <code>requests</code>. Isso é uma escolha didática deliberada.</span></p>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">What it simplifies</span><span data-lang="pt">O que isso simplifica</span></h3>
+        <ul>
+          <li><span data-lang="en">No tool loop to distract from memory ideas.</span><span data-lang="pt">Sem tool loop para distrair das ideias de memória.</span></li>
+          <li><span data-lang="en">No schema registration overhead.</span><span data-lang="pt">Sem overhead de registro de schema.</span></li>
+          <li><span data-lang="en">Direct control over what gets sent each turn.</span><span data-lang="pt">Controle direto sobre o que é enviado em cada turno.</span></li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">What it highlights</span><span data-lang="pt">O que isso destaca</span></h3>
+        <ul>
+          <li><span data-lang="en">Prompt construction.</span><span data-lang="pt">Construção de prompt.</span></li>
+          <li><span data-lang="en">Summarization timing.</span><span data-lang="pt">Momento da sumarização.</span></li>
+          <li><span data-lang="en">Persistence and recall behavior.</span><span data-lang="pt">Comportamento de persistência e recall.</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">The tutorial is isolating one concern at a time. By stepping outside the generic agent framework, the file makes context management visible instead of hiding it behind an abstraction.</span><span data-lang="pt">O tutorial está isolando um assunto por vez. Ao sair do framework genérico de agent, o arquivo torna a gestão de contexto visível em vez de escondê-la atrás de uma abstração.</span></p>
+    </div>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Run the comparison mode to watch context growth diverge:</span><span data-lang="pt">Rode o modo de comparação para ver o crescimento do contexto se separar:</span></p>
+    <pre><code>python examples/memory_agent.py --mode compare --turns 10</code></pre>
+    <p><span data-lang="en">Then try persistence with the managed version:</span><span data-lang="pt">Depois teste a persistência com a versão managed:</span></p>
+    <pre><code>python examples/memory_agent.py --mode interactive-managed --session course-demo</code></pre>
+  </section>
+
+  <nav class="lesson-nav">
+    <a href="lesson-09-extraction.html"><span data-lang="en">← Lesson 9</span><span data-lang="pt">← Lição 9</span></a>
+    <span class="muted"><span data-lang="en">Lesson 10</span><span data-lang="pt">Lição 10</span></span>
+    <a href="index.html"><span data-lang="en">All Lessons →</span><span data-lang="pt">Todas as Lições →</span></a>
+  </nav>
+</div>
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+</body>
+</html>

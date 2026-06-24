@@ -1,0 +1,5 @@
+ddgs>=9.14.1
+duckduckgo-mcp-server>=0.4
+mcp[cli]>=1.27
+requests>=2.32.0
+rich>=13.9.0

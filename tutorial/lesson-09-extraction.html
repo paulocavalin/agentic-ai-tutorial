@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  box-shadow: var(--cp-shadow);
+}
+.lesson-nav a,
+.lesson-nav span {
+  text-decoration: none;
+  color: var(--cp-text);
+  font-weight: 600;
+}
+.lesson-nav .muted {
+  color: var(--cp-text-muted);
+  font-weight: 500;
+}
+.hero,
+.section,
+.try-it,
+.comparison-table {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--cp-shadow);
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--cp-accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+h1, h2, h3 { line-height: 1.2; }
+h1 { margin: 0 0 12px; font-size: 2.2rem; }
+h2 { margin: 0 0 14px; font-size: 1.35rem; }
+h3 { margin: 24px 0 10px; font-size: 1.05rem; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px 20px; padding: 0; }
+li { margin-bottom: 8px; }
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.card,
+.callout,
+.note,
+.step-list,
+.mini-card {
+  background: var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 18px;
+}
+.callout {
+  border-left: 6px solid var(--cp-accent);
+}
+.note {
+  border-left: 6px solid var(--cp-warning);
+}
+pre code {
+  display: block;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+code,
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+}
+.file-ref {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 0.625rem;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  color: var(--cp-text-soft);
+}
+.caption {
+  margin: 0 0 10px;
+  color: var(--cp-text-muted);
+  font-size: 0.95rem;
+}
+.annotations {
+  margin-top: 12px;
+}
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+th,
+td {
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--cp-surface-soft);
+}
+.footer-space { margin-top: 12px; }
+</style>
+<title>Lesson 9 — Structured Data Extraction — AI Agents from Scratch</title>
+</head>
+<body>
+<div class="page">
+  <nav class="lesson-nav">
+    <a href="lesson-08-skills.html"><span data-lang="en">← Lesson 8: Dynamic Skill Loading</span><span data-lang="pt">← Lição 8: Carregamento Dinâmico de Skills</span></a>
+    <span class="muted"><span data-lang="en">Lesson 9</span><span data-lang="pt">Lição 9</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="langSwitcher" class="lang-switcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="lesson-10-memory.html"><span data-lang="en">Next: Context &amp; Memory Management →</span><span data-lang="pt">Próxima: Contexto e Gerenciamento de Memória →</span></a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow"><span data-lang="en">Lesson 9</span><span data-lang="pt">Lição 9</span></p>
+    <h1><span data-lang="en">Structured Data Extraction</span><span data-lang="pt">Extração de Dados Estruturados</span></h1>
+    <p><span data-lang="en">Source: </span><span data-lang="pt">Fonte: </span><span class="file-ref">examples/extraction_agent.py</span></p>
+    <div class="grid two">
+      <div class="card">
+        <h2><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h2>
+        <ul>
+          <li><span data-lang="en">Why tool calling can double as structured output.</span><span data-lang="pt">Por que a chamada de ferramentas pode funcionar como saída estruturada.</span></li>
+          <li><span data-lang="en">How JSON schemas become extraction contracts.</span><span data-lang="pt">Como esquemas JSON se tornam contratos de extração.</span></li>
+          <li><span data-lang="en">How the extraction handler captures results outside normal prose.</span><span data-lang="pt">Como o manipulador de extração captura resultados fora da prosa normal.</span></li>
+          <li><span data-lang="en">Why <code>report_unrecognized</code> is a useful fallback path.</span><span data-lang="pt">Por que <code>report_unrecognized</code> é um caminho de fallback útil.</span></li>
+        </ul>
+      </div>
+      <div class="note">
+        <strong><span data-lang="en">Prerequisites.</span><span data-lang="pt">Pré-requisitos.</span></strong>
+        <p><span data-lang="en">Lessons 1-2 explained basic tool calling. Here the "tool" is not used to fetch information; it is used to force the model to emit machine-readable fields instead of free-form text.</span><span data-lang="pt">As Lições 1-2 explicaram a chamada básica de ferramentas. Aqui a "ferramenta" não é usada para buscar informações; ela é usada para forçar o modelo a emitir campos legíveis por máquina em vez de texto livre.</span></p>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <h2><span data-lang="en">Tool calling as structured output</span><span data-lang="pt">Chamada de ferramentas como saída estruturada</span></h2>
+    <p><span data-lang="en">The key shift is conceptual: the model is no longer asked to <em>answer</em>. It is asked to fill out function parameters that match a schema. That turns the tool call payload into the final product.</span><span data-lang="pt">A mudança principal é conceitual: o modelo não é mais solicitado a <em>responder</em>. Ele é solicitado a preencher parâmetros de função que correspondem a um esquema. Isso transforma o payload da chamada de ferramenta no produto final.</span></p>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">The extraction function is mostly a capture mechanism. The model does the semantic work by choosing field values that satisfy the schema.</span><span data-lang="pt">A função de extração é principalmente um mecanismo de captura. O modelo faz o trabalho semântico escolhendo valores de campo que satisfazem o esquema.</span></p>
+    </div>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">Free-text mode</span><span data-lang="pt">Modo de texto livre</span></h3>
+        <p><span data-lang="en">Good for explanations, bad for downstream parsing.</span><span data-lang="pt">Bom para explicações, ruim para análise downstream.</span></p>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">Tool-output mode</span><span data-lang="pt">Modo de saída de ferramenta</span></h3>
+        <p><span data-lang="en">Good for automation because the shape is already defined.</span><span data-lang="pt">Bom para automação porque a estrutura já está definida.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">1) Schemas define the extraction target</span><span data-lang="pt">1) Esquemas definem o alvo de extração</span></h2>
+    <p class="caption"><span data-lang="en">The built-in invoice schema is just JSON Schema-style structure. The agent can swap it for contact, meeting, or a user-provided schema file.</span><span data-lang="pt">O esquema de fatura embutido é apenas uma estrutura no estilo JSON Schema. O agente pode substituí-lo por contato, reunião ou um arquivo de esquema fornecido pelo usuário.</span></p>
+    <pre><code>_INVOICE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "vendor": {"type": ["string", "null"], "description": "Supplier/vendor name."},
+        "invoice_number": {"type": ["string", "null"], "description": "Invoice/NF-e number."},
+        "issue_date": {"type": ["string", "null"], "description": "Issue date in YYYY-MM-DD format."},
+        "due_date": {"type": ["string", "null"], "description": "Payment due date in YYYY-MM-DD format."},
+        "currency": {"type": "string", "enum": ["BRL", "USD", "EUR", "GBP"]},
+        "subtotal": {"type": ["number", "null"]},
+        "tax_amount": {"type": ["number", "null"]},
+        "total": {"type": "number"},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "description": {"type": "string"},
+                    "quantity": {"type": "number"},
+                    "unit_price": {"type": "number"},
+                    "line_total": {"type": "number"},
+                },
+                "required": ["description", "quantity", "unit_price", "line_total"],
+            },
+        },
+        "notes": {"type": ["string", "null"]},
+        "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    },
+    "required": ["total", "confidence"],
+}</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><code>required</code> fields guarantee a minimum useful payload.</span><span data-lang="pt">Os campos <code>required</code> garantem um payload mínimo útil.</span></li>
+      <li><span data-lang="en"><code>null</code>-friendly properties let the model admit missing data instead of hallucinating it.</span><span data-lang="pt">As propriedades compatíveis com <code>null</code> permitem que o modelo admita dados ausentes em vez de aluciná-los.</span></li>
+      <li><span data-lang="en"><code>confidence</code> is also structured, so downstream code can branch on it.</span><span data-lang="pt"><code>confidence</code> também é estruturado, então o código downstream pode ramificar com base nele.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">2) Any schema can be wrapped as a tool</span><span data-lang="pt">2) Qualquer esquema pode ser encapsulado como ferramenta</span></h2>
+    <p><span data-lang="en">The agent does not need a custom tool schema per document type. It uses one builder that turns arbitrary JSON schema into a callable function definition.</span><span data-lang="pt">O agente não precisa de um esquema de ferramenta personalizado por tipo de documento. Ele usa um builder que transforma qualquer esquema JSON em uma definição de função callable.</span></p>
+    <pre><code>def _build_tool_schema(schema_name: str, properties: Dict) -> Dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": f"extract_{schema_name}",
+            "description": (
+                f"Extract structured {schema_name} data from the provided text. "
+                "Use null for fields not present in the text. Never invent values."
+            ),
+            "parameters": properties,
+        },
+    }</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">The schema itself becomes the <code>parameters</code> object the model must satisfy.</span><span data-lang="pt">O próprio esquema se torna o objeto <code>parameters</code> que o modelo deve satisfazer.</span></li>
+      <li><span data-lang="en">The function name is dynamic, which keeps prompts readable: <code>extract_invoice</code>, <code>extract_meeting</code>, and so on.</span><span data-lang="pt">O nome da função é dinâmico, o que mantém os prompts legíveis: <code>extract_invoice</code>, <code>extract_meeting</code>, e assim por diante.</span></li>
+      <li><span data-lang="en">This is what makes the example extensible without touching the base <code>Agent</code> class.</span><span data-lang="pt">Isso é o que torna o exemplo extensível sem tocar na classe base <code>Agent</code>.</span></li>
+    </ul>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">Once you understand this pattern, "structured extraction" is just "tool calling with a schema-shaped output contract."</span><span data-lang="pt">Uma vez que você entende este padrão, "extração estruturada" é apenas "chamada de ferramenta com um contrato de saída em formato de esquema".</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">3) The handler captures extracted fields in a global result</span><span data-lang="pt">3) O manipulador captura campos extraídos em um resultado global</span></h2>
+    <p class="caption"><span data-lang="en">The handler is intentionally simple. It validates and stores whatever arguments the model supplied, then reports lightweight status back to the loop.</span><span data-lang="pt">O manipulador é intencionalmente simples. Ele valida e armazena quaisquer argumentos que o modelo forneceu, então reporta um status leve de volta ao loop.</span></p>
+    <pre><code>_extracted_result = None
+
+
+def _make_extract_fn(schema_name: str, schema_props: Dict):
+    def extract(**kwargs) -> Dict[str, Any]:
+        global _extracted_result
+        validated = {}
+        props = schema_props.get("properties", {})
+        for key, value in kwargs.items():
+            if key in props:
+                if value == "" or value == "N/A" or value == "n/a":
+                    validated[key] = None
+                else:
+                    validated[key] = value
+            else:
+                validated[key] = value
+        _extracted_result = validated
+        return {
+            "status": "extracted",
+            "fields_filled": len([v for v in validated.values() if v is not None])
+        }
+    extract.__name__ = f"extract_{schema_name}"
+    return extract</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">The closure remembers which schema it belongs to.</span><span data-lang="pt">O closure lembra a qual esquema pertence.</span></li>
+      <li><span data-lang="en">The global <code>_extracted_result</code> is crude but effective for a single-run CLI example.</span><span data-lang="pt">O global <code>_extracted_result</code> é rudimentar, mas eficaz para um exemplo de CLI de execução única.</span></li>
+      <li><span data-lang="en">The function returns a small status object because the real artifact is the captured payload, not the tool's textual return.</span><span data-lang="pt">A função retorna um pequeno objeto de status porque o artefato real é o payload capturado, não o retorno textual da ferramenta.</span></li>
+    </ul>
+    <div class="note">
+      <strong><span data-lang="en">⚠️ Note</span><span data-lang="pt">⚠️ Nota</span></strong>
+      <p><span data-lang="en">In production you would likely return the extracted data explicitly or pass a result object around. The global keeps the tutorial easy to follow because the control flow stays linear in <code>main()</code>.</span><span data-lang="pt">Em produção você provavelmente retornaria os dados extraídos explicitamente ou passaria um objeto de resultado. O global mantém o tutorial fácil de seguir porque o fluxo de controle permanece linear em <code>main()</code>.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">4) The escape hatch handles mismatched documents</span><span data-lang="pt">4) A saída de emergência trata documentos incompatíveis</span></h2>
+    <p><span data-lang="en">If the user asks for invoice extraction but provides a completely different document, the model has a clean non-success path.</span><span data-lang="pt">Se o usuário solicita extração de fatura mas fornece um documento completamente diferente, o modelo tem um caminho limpo de não-sucesso.</span></p>
+    <pre><code>def _build_validate_tool() -> Dict:
+    return {
+        "type": "function",
+        "function": {
+            "name": "report_unrecognized",
+            "description": "Call this when the text does not match the expected document type.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reason": {"type": "string"}
+                },
+                "required": ["reason"],
+            },
+        },
+    }
+
+
+def _report_unrecognized(reason: str) -> Dict[str, Any]:
+    global _extracted_result
+    _extracted_result = {"error": "unrecognized", "reason": reason, "confidence": "low"}
+    return {"status": "reported"}</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">This avoids forcing bad data into the extraction schema.</span><span data-lang="pt">Isso evita forçar dados ruins no esquema de extração.</span></li>
+      <li><span data-lang="en">The returned payload still has structure, including a low-confidence marker.</span><span data-lang="pt">O payload retornado ainda tem estrutura, incluindo um marcador de baixa confiança.</span></li>
+      <li><span data-lang="en">Fallback tools are often the difference between brittle demos and robust workflows.</span><span data-lang="pt">Ferramentas de fallback são frequentemente a diferença entre demos frágeis e fluxos de trabalho robustos.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">5) The system prompt forces tool usage and self-reported confidence</span><span data-lang="pt">5) O prompt de sistema força o uso de ferramentas e confiança auto-relatada</span></h2>
+    <pre><code>def _build_system_prompt(schema_name: str) -> str:
+    return f"""You are a document data extraction specialist.
+
+Your task: extract structured {schema_name} data from the text provided by the user.
+
+RULES:
+1. ALWAYS call the extract_{schema_name} tool. Never respond with free text.
+2. Use null for any field not present in the text. Do NOT invent or guess values.
+3. Normalize dates to YYYY-MM-DD format.
+4. Normalize monetary values to plain numbers.
+5. If the document clearly does not match the expected type, call report_unrecognized instead.
+6. Set confidence to "low" if you had to make significant assumptions.
+7. Set confidence to "high" only if all required fields were clearly present.
+"""</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><strong>Rule 1</strong> is the anchor: no free-text answer is acceptable.</span><span data-lang="pt"><strong>Regra 1</strong> é a âncora: nenhuma resposta em texto livre é aceitável.</span></li>
+      <li><span data-lang="en"><strong>Rules 2-5</strong> push the model toward honest, normalized output.</span><span data-lang="pt"><strong>Regras 2-5</strong> levam o modelo a uma saída honesta e normalizada.</span></li>
+      <li><span data-lang="en"><strong>Rules 6-7</strong> make confidence scoring part of the schema contract rather than a vague suggestion.</span><span data-lang="pt"><strong>Regras 6-7</strong> tornam a pontuação de confiança parte do contrato do esquema, e não uma sugestão vaga.</span></li>
+    </ul>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">The confidence field is produced by the model itself. That is not a guarantee of correctness, but it is a useful signal for downstream review, thresholds, or human-in-the-loop workflows.</span><span data-lang="pt">O campo de confiança é produzido pelo próprio modelo. Isso não é uma garantia de correção, mas é um sinal útil para revisão downstream, limites ou fluxos de trabalho com humano no loop.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Extraction flow in one pass</span><span data-lang="pt">Fluxo de extração em uma passagem</span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><span data-lang="en">Phase</span><span data-lang="pt">Fase</span></th>
+            <th><span data-lang="en">What happens</span><span data-lang="pt">O que acontece</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span data-lang="en">Schema selection</span><span data-lang="pt">Seleção de esquema</span></td>
+            <td><span data-lang="en">Pick built-in schema or load one from a file.</span><span data-lang="pt">Escolher esquema embutido ou carregar um de um arquivo.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Tool synthesis</span><span data-lang="pt">Síntese de ferramenta</span></td>
+            <td><span data-lang="en">Wrap the schema with <code>_build_tool_schema()</code>.</span><span data-lang="pt">Encapsular o esquema com <code>_build_tool_schema()</code>.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Execution</span><span data-lang="pt">Execução</span></td>
+            <td><span data-lang="en">Run the agent with a prompt that requires the extraction tool.</span><span data-lang="pt">Executar o agente com um prompt que requer a ferramenta de extração.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Capture</span><span data-lang="pt">Captura</span></td>
+            <td><span data-lang="en">The handler stores the extracted arguments in <code>_extracted_result</code>.</span><span data-lang="pt">O manipulador armazena os argumentos extraídos em <code>_extracted_result</code>.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Output</span><span data-lang="pt">Saída</span></td>
+            <td><span data-lang="en"><code>main()</code> prints the structured JSON for downstream use.</span><span data-lang="pt"><code>main()</code> imprime o JSON estruturado para uso downstream.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it yourself</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Run the built-in invoice extractor with inline text:</span><span data-lang="pt">Execute o extrator de faturas embutido com texto em linha:</span></p>
+    <pre><code>python examples/extraction_agent.py   --schema invoice   --input "NF ACME 1024, issue 2025-01-20, due 2025-01-30, subtotal 1000, tax 200, total 1200"</code></pre>
+    <p><span data-lang="en">Then inspect the returned JSON and the confidence line printed on stderr.</span><span data-lang="pt">Depois, inspecione o JSON retornado e a linha de confiança impressa no stderr.</span></p>
+  </section>
+
+  <nav class="lesson-nav">
+    <a href="lesson-08-skills.html"><span data-lang="en">← Lesson 8: Dynamic Skill Loading</span><span data-lang="pt">← Lição 8: Carregamento Dinâmico de Skills</span></a>
+    <span class="muted"><span data-lang="en">Lesson 9</span><span data-lang="pt">Lição 9</span></span>
+    <a href="lesson-10-memory.html"><span data-lang="en">Next: Context &amp; Memory Management →</span><span data-lang="pt">Próxima: Contexto e Gerenciamento de Memória →</span></a>
+  </nav>
+</div>
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+</body>
+</html>

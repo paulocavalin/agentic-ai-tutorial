@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  box-shadow: var(--cp-shadow);
+}
+.lesson-nav a,
+.lesson-nav span {
+  text-decoration: none;
+  color: var(--cp-text);
+  font-weight: 600;
+}
+.lesson-nav .muted {
+  color: var(--cp-text-muted);
+  font-weight: 500;
+}
+.hero,
+.section,
+.try-it,
+.comparison-table {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--cp-shadow);
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--cp-accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+h1, h2, h3 { line-height: 1.2; }
+h1 { margin: 0 0 12px; font-size: 2.2rem; }
+h2 { margin: 0 0 14px; font-size: 1.35rem; }
+h3 { margin: 24px 0 10px; font-size: 1.05rem; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px 20px; padding: 0; }
+li { margin-bottom: 8px; }
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.card,
+.callout,
+.note,
+.step-list,
+.mini-card {
+  background: var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 18px;
+}
+.callout {
+  border-left: 6px solid var(--cp-accent);
+}
+.note {
+  border-left: 6px solid var(--cp-warning);
+}
+pre code {
+  display: block;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+code,
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+}
+.file-ref {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 0.625rem;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  color: var(--cp-text-soft);
+}
+.caption {
+  margin: 0 0 10px;
+  color: var(--cp-text-muted);
+  font-size: 0.95rem;
+}
+.annotations {
+  margin-top: 12px;
+}
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+th,
+td {
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--cp-surface-soft);
+}
+.footer-space { margin-top: 12px; }
+</style>
+<title>Lesson 8 — Dynamic Skill Loading — AI Agents from Scratch</title>
+</head>
+<body>
+<div class="page">
+  <nav class="lesson-nav">
+    <a href="lesson-07-orchestrator.html"><span data-lang="en">← Lesson 7: Multi-Agent Orchestration</span><span data-lang="pt">← Lição 7: Orquestração Multi-Agente</span></a>
+    <span class="muted"><span data-lang="en">Lesson 8</span><span data-lang="pt">Lição 8</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="langSwitcher" class="lang-switcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="lesson-09-extraction.html"><span data-lang="en">Next: Structured Data Extraction →</span><span data-lang="pt">Próxima: Extração de Dados Estruturados →</span></a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow"><span data-lang="en">Lesson 8</span><span data-lang="pt">Lição 8</span></p>
+    <h1><span data-lang="en">Dynamic Skill Loading</span><span data-lang="pt">Carregamento Dinâmico de Habilidades</span></h1>
+    <p><span data-lang="en">Source: </span><span data-lang="pt">Fonte: </span><span class="file-ref">examples/skills_agent.py</span></p>
+    <div class="grid two">
+      <div class="card">
+        <h2><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h2>
+        <ul>
+          <li><span data-lang="en">The difference between a skill and a tool.</span><span data-lang="pt">A diferença entre uma habilidade e uma ferramenta.</span></li>
+          <li><span data-lang="en">Why the agent starts with only <code>load_skill</code>.</span><span data-lang="pt">Por que o agente começa com apenas <code>load_skill</code>.</span></li>
+          <li><span data-lang="en">How <span class="file-ref">SKILL.md</span> files act as capability manifests.</span><span data-lang="pt">Como os arquivos <span class="file-ref">SKILL.md</span> funcionam como manifestos de capacidade.</span></li>
+          <li><span data-lang="en">How tools are registered into a live agent at runtime.</span><span data-lang="pt">Como ferramentas são registradas em um agente ativo em tempo de execução.</span></li>
+        </ul>
+      </div>
+      <div class="note">
+        <strong><span data-lang="en">Prerequisites.</span><span data-lang="pt">Pré-requisitos.</span></strong>
+        <p><span data-lang="en">Lessons 1-2 taught direct tool usage, and Lesson 3 introduced orchestration. This lesson shifts focus to capability activation: the agent becomes more capable only when it needs to.</span><span data-lang="pt">As Lições 1-2 ensinaram o uso direto de ferramentas, e a Lição 3 introduziu a orquestração. Esta lição muda o foco para a ativação de capacidades: o agente fica mais capaz apenas quando precisa.</span></p>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <h2><span data-lang="en">Skills vs. tools</span><span data-lang="pt">Habilidades vs. ferramentas</span></h2>
+    <p><span data-lang="en">A <strong>tool</strong> is one callable function schema. A <strong>skill</strong> is a package of intent: a name, a description, instructions, and a list of tools that should become available together.</span><span data-lang="pt">Uma <strong>ferramenta</strong> é um esquema de função callable. Uma <strong>habilidade</strong> é um pacote de intenção: um nome, uma descrição, instruções e uma lista de ferramentas que devem ficar disponíveis juntas.</span></p>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">Tool</span><span data-lang="pt">Ferramenta</span></h3>
+        <ul>
+          <li><span data-lang="en">Single function schema.</span><span data-lang="pt">Esquema de função única.</span></li>
+          <li><span data-lang="en">Single Python handler.</span><span data-lang="pt">Manipulador Python único.</span></li>
+          <li><span data-lang="en">Example: <code>web_search</code>.</span><span data-lang="pt">Exemplo: <code>web_search</code>.</span></li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">Skill</span><span data-lang="pt">Habilidade</span></h3>
+        <ul>
+          <li><span data-lang="en">Capability bundle.</span><span data-lang="pt">Pacote de capacidade.</span></li>
+          <li><span data-lang="en">Markdown description plus tool list.</span><span data-lang="pt">Descrição em Markdown mais lista de ferramentas.</span></li>
+          <li><span data-lang="en">Example: <code>search</code> loads <code>web_search</code> and <code>web_fetch</code>.</span><span data-lang="pt">Exemplo: <code>search</code> carrega <code>web_search</code> e <code>web_fetch</code>.</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">Skills solve prompt bloat. Instead of exposing every tool and every instruction up front, the agent keeps a tiny catalog and loads the detailed instructions only when the task needs them.</span><span data-lang="pt">As habilidades resolvem o inchaço do prompt. Em vez de expor cada ferramenta e instrução de antemão, o agente mantém um catálogo mínimo e carrega as instruções detalhadas apenas quando a tarefa precisa.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">1) The bootstrap tool is the only starting capability</span><span data-lang="pt">1) A ferramenta de bootstrap é a única capacidade inicial</span></h2>
+    <p class="caption"><span data-lang="en">The base agent begins almost empty: one schema, one meta-tool, and a lightweight catalog in the system prompt.</span><span data-lang="pt">O agente base começa quase vazio: um esquema, uma meta-ferramenta e um catálogo leve no prompt de sistema.</span></p>
+    <pre><code>LOAD_SKILL_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "load_skill",
+        "description": "Load a skill by name and activate its tools automatically.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "skill_name": {
+                    "type": "string",
+                    "description": "Skill name to load.",
+                }
+            },
+            "required": ["skill_name"],
+        },
+    },
+}</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">This schema is intentionally small: the model only needs to choose a skill name.</span><span data-lang="pt">Este esquema é intencionalmente pequeno: o modelo só precisa escolher um nome de habilidade.</span></li>
+      <li><span data-lang="en">The system prompt reinforces the rule: <em>call <code>load_skill</code> before using domain tools</em>.</span><span data-lang="pt">O prompt de sistema reforça a regra: <em>chame <code>load_skill</code> antes de usar ferramentas de domínio</em>.</span></li>
+      <li><span data-lang="en">That makes <code>load_skill</code> a meta-tool, similar in spirit to Lesson 3's delegation tool.</span><span data-lang="pt">Isso torna <code>load_skill</code> uma meta-ferramenta, similar em espírito à ferramenta de delegação da Lição 3.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en"><span class="file-ref">SKILL.md</span> is a human-readable manifest</span><span data-lang="pt"><span class="file-ref">SKILL.md</span> é um manifesto legível por humanos</span></h2>
+    <p><span data-lang="en">Each skill lives in its own folder and describes itself in markdown. The parser reads structure from headings instead of requiring a separate JSON format.</span><span data-lang="pt">Cada habilidade vive em sua própria pasta e se descreve em markdown. O parser lê a estrutura a partir dos títulos em vez de exigir um formato JSON separado.</span></p>
+    <pre><code># search
+
+## Description
+Use this skill for general research, trends, and current-topic questions.
+
+## Tools
+- web_search
+- web_fetch
+
+## Instructions
+- Run `web_search` before answering research/current-topic questions.
+- Use `web_fetch` when snippets are insufficient.</code></pre>
+    <pre><code>def parse_skill_markdown(content: str) -> Dict[str, Any]:
+    lines = [line.rstrip() for line in content.splitlines()]
+    name = ""
+    description_lines = []
+    instructions_lines = []
+    tools = []
+    section = ""
+
+    for line in lines:
+        if line.startswith("# "):
+            name = line[2:].strip().lower()
+            continue
+        if line.startswith("## "):
+            section = line[3:].strip().lower()
+            continue
+
+        stripped = line.strip()
+        if section == "description" and stripped:
+            description_lines.append(stripped)
+        elif section == "instructions" and stripped:
+            instructions_lines.append(stripped)
+        elif section == "tools" and stripped.startswith("- "):
+            tools.append(stripped[2:].strip())
+
+    return {
+        "name": name,
+        "description": " ".join(description_lines).strip(),
+        "instructions": "
+".join(instructions_lines).strip(),
+        "tools": tools,
+        "content": content,
+    }</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en">The parser returns both structured fields and the raw markdown <code>content</code>.</span><span data-lang="pt">O parser retorna tanto campos estruturados quanto o <code>content</code> markdown bruto.</span></li>
+      <li><span data-lang="en">The raw content matters later because the full skill text is injected into the live conversation.</span><span data-lang="pt">O conteúdo bruto importa mais tarde porque o texto completo da habilidade é injetado na conversa ativa.</span></li>
+      <li><span data-lang="en">Markdown keeps authoring friction low: adding a skill is mostly documentation plus tool names.</span><span data-lang="pt">O Markdown mantém o atrito de autoria baixo: adicionar uma habilidade é principalmente documentação mais nomes de ferramentas.</span></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">3) Catalog first, full instructions later</span><span data-lang="pt">3) Catálogo primeiro, instruções completas depois</span></h2>
+    <p><span data-lang="en">The agent's base system prompt includes only a lightweight skill index. That is enough for the model to decide which skill to load, but not enough to bloat context with every detail.</span><span data-lang="pt">O prompt de sistema base do agente inclui apenas um índice leve de habilidades. Isso é suficiente para o modelo decidir qual habilidade carregar, mas não o suficiente para inflar o contexto com cada detalhe.</span></p>
+    <pre><code>def build_skill_catalog_text(skill_catalog):
+    lines = []
+    for skill_name, item in sorted(skill_catalog.items()):
+        desc = item.get("description", "")
+        tools = ", ".join(item.get("tools", []))
+        lines.append(f"- {skill_name}: {desc} (tools: {tools})")
+    return "
+".join(lines)</code></pre>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">Skill catalog</span><span data-lang="pt">Catálogo de habilidades</span></h3>
+        <p><span data-lang="en">Short index in the base prompt. Helps selection.</span><span data-lang="pt">Índice curto no prompt base. Auxilia na seleção.</span></p>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">Full skill content</span><span data-lang="pt">Conteúdo completo da habilidade</span></h3>
+        <p><span data-lang="en">Injected only after loading. Helps execution.</span><span data-lang="pt">Injetado apenas após o carregamento. Auxilia na execução.</span></p>
+      </div>
+    </div>
+    <div class="callout">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">This mirrors retrieval patterns in larger systems: first retrieve a compact index, then pull detailed instructions only for the relevant item.</span><span data-lang="pt">Isso espelha padrões de recuperação em sistemas maiores: primeiro recuperar um índice compacto, depois buscar instruções detalhadas apenas para o item relevante.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">4) The load function mutates the running agent</span><span data-lang="pt">4) A função de carregamento muta o agente em execução</span></h2>
+    <p class="caption"><span data-lang="en">This closure is the heart of the design. It updates the agent's messages, tools, and tool registry while the conversation is still running.</span><span data-lang="pt">Este closure é o coração do design. Ele atualiza as mensagens, ferramentas e registro de ferramentas do agente enquanto a conversa ainda está em execução.</span></p>
+    <pre><code>def make_load_skill_tool(agent, skill_catalog, tool_catalog, trace):
+    loaded_skills = set()
+    activated_tools = set()
+
+    def load_skill(skill_name: str) -> Dict[str, Any]:
+        name = str(skill_name).strip().lower()
+        skill = skill_catalog[name]
+
+        if name not in loaded_skills:
+            loaded_skills.add(name)
+            agent.messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        f"[LOADED SKILL: {name}]
+"
+                        "Skill details below are now active:
+
+"
+                        f"{skill['content']}"
+                    ),
+                }
+            )
+
+        newly_activated = []
+        for tool_name in skill.get("tools", []):
+            if tool_name in activated_tools or tool_name not in tool_catalog:
+                continue
+            activated_tools.add(tool_name)
+            newly_activated.append(tool_name)
+            agent.tools.append(tool_catalog[tool_name]["schema"])
+            agent.tool_registry[tool_name] = tool_catalog[tool_name]["func"]
+
+        return {
+            "ok": True,
+            "skill_name": name,
+            "newly_activated_tools": newly_activated,
+            "active_tools": sorted(activated_tools),
+        }
+
+    return load_skill</code></pre>
+    <ul class="annotations">
+      <li><span data-lang="en"><code>agent.messages.append(...)</code> injects the full skill instructions as a new system message.</span><span data-lang="pt"><code>agent.messages.append(...)</code> injeta as instruções completas da habilidade como uma nova mensagem de sistema.</span></li>
+      <li><span data-lang="en"><code>agent.tools.append(...)</code> changes what schemas the model can call on the next loop iteration.</span><span data-lang="pt"><code>agent.tools.append(...)</code> muda quais esquemas o modelo pode chamar na próxima iteração do loop.</span></li>
+      <li><span data-lang="en"><code>agent.tool_registry[name] = ...</code> wires the new schema name to executable Python.</span><span data-lang="pt"><code>agent.tool_registry[name] = ...</code> conecta o novo nome de esquema ao Python executável.</span></li>
+      <li><span data-lang="en"><code>loaded_skills</code> and <code>activated_tools</code> prevent duplicate injection.</span><span data-lang="pt"><code>loaded_skills</code> e <code>activated_tools</code> evitam injeção duplicada.</span></li>
+    </ul>
+    <div class="note">
+      <strong><span data-lang="en">⚠️ Note</span><span data-lang="pt">⚠️ Nota</span></strong>
+      <p><span data-lang="en">This example mutates the live agent object directly. That is simple and effective for a tutorial, but in a larger system you might wrap these mutations in helper methods for validation and observability.</span><span data-lang="pt">Este exemplo muta o objeto do agente ativo diretamente. Isso é simples e eficaz para um tutorial, mas em um sistema maior você pode encapsular essas mutações em métodos auxiliares para validação e observabilidade.</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">5) Tool discovery still comes from plugins</span><span data-lang="pt">5) A descoberta de ferramentas ainda vem de plugins</span></h2>
+    <p><span data-lang="en">Skills do not contain Python code. They only reference tool names. The actual executable tools still come from the <span class="file-ref">tools/</span> plugin catalog discovered at startup.</span><span data-lang="pt">As habilidades não contêm código Python. Elas apenas referenciam nomes de ferramentas. As ferramentas executáveis reais ainda vêm do catálogo de plugins <span class="file-ref">tools/</span> descoberto na inicialização.</span></p>
+    <div class="grid two">
+      <div class="mini-card">
+        <h3><span data-lang="en">skills/</span><span data-lang="pt">skills/</span></h3>
+        <ul>
+          <li><span data-lang="en">What capability exists?</span><span data-lang="pt">Qual capacidade existe?</span></li>
+          <li><span data-lang="en">When should it be used?</span><span data-lang="pt">Quando deve ser usada?</span></li>
+          <li><span data-lang="en">Which tool names belong to it?</span><span data-lang="pt">Quais nomes de ferramentas pertencem a ela?</span></li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h3><span data-lang="en">tools/</span><span data-lang="pt">tools/</span></h3>
+        <ul>
+          <li><span data-lang="en">What schema does the model see?</span><span data-lang="pt">Qual esquema o modelo vê?</span></li>
+          <li><span data-lang="en">What handler executes?</span><span data-lang="pt">Qual manipulador executa?</span></li>
+          <li><span data-lang="en">Optional tool-specific docs.</span><span data-lang="pt">Documentação opcional específica da ferramenta.</span></li>
+        </ul>
+      </div>
+    </div>
+    <p><span data-lang="en">That separation is powerful: you can reorganize skills without rewriting handlers, or reuse the same tool in multiple skills.</span><span data-lang="pt">Essa separação é poderosa: você pode reorganizar habilidades sem reescrever manipuladores, ou reutilizar a mesma ferramenta em múltiplas habilidades.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">6) Why dynamic loading matters</span><span data-lang="pt">6) Por que o carregamento dinâmico importa</span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><span data-lang="en">Always-loaded agent</span><span data-lang="pt">Agente sempre carregado</span></th>
+            <th><span data-lang="en">Dynamic-skills agent</span><span data-lang="pt">Agente com habilidades dinâmicas</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span data-lang="en">Big initial prompt.</span><span data-lang="pt">Prompt inicial grande.</span></td>
+            <td><span data-lang="en">Small initial prompt.</span><span data-lang="pt">Prompt inicial pequeno.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">All tool schemas exposed immediately.</span><span data-lang="pt">Todos os esquemas de ferramentas expostos imediatamente.</span></td>
+            <td><span data-lang="en">Only the needed tools are exposed.</span><span data-lang="pt">Apenas as ferramentas necessárias são expostas.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">More token cost on every turn.</span><span data-lang="pt">Maior custo em tokens a cada turno.</span></td>
+            <td><span data-lang="en">Cost grows only when capability is activated.</span><span data-lang="pt">O custo cresce apenas quando a capacidade é ativada.</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Harder to reason about tool selection.</span><span data-lang="pt">Mais difícil de raciocinar sobre a seleção de ferramentas.</span></td>
+            <td><span data-lang="en">Cleaner routing: load first, then use.</span><span data-lang="pt">Roteamento mais limpo: carregar primeiro, depois usar.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout footer-space">
+      <strong><span data-lang="en">Key Insight</span><span data-lang="pt">Insight Chave</span></strong>
+      <p><span data-lang="en">This is a lightweight version of modular agents. The agent remains small and generic until a task reveals which domain-specific instructions and tools it actually needs.</span><span data-lang="pt">Esta é uma versão leve de agentes modulares. O agente permanece pequeno e genérico até que uma tarefa revele quais instruções e ferramentas específicas do domínio ele realmente precisa.</span></p>
+    </div>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it yourself</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Ask for a task that requires more than one skill so you can watch multiple loads happen:</span><span data-lang="pt">Peça uma tarefa que exige mais de uma habilidade para observar múltiplos carregamentos acontecerem:</span></p>
+    <pre><code>python examples/skills_agent.py   --prompt "What's the weather in Tokyo, and create a 5-day plan for learning agentic AI?"   --trace</code></pre>
+    <p><span data-lang="en">Look for <code>load_skill</code> first, then watch the agent gain new tool schemas and tool handlers during the same run.</span><span data-lang="pt">Procure <code>load_skill</code> primeiro, depois observe o agente ganhar novos esquemas de ferramentas e manipuladores durante a mesma execução.</span></p>
+  </section>
+
+  <nav class="lesson-nav">
+    <a href="lesson-07-orchestrator.html"><span data-lang="en">← Lesson 7: Multi-Agent Orchestration</span><span data-lang="pt">← Lição 7: Orquestração Multi-Agente</span></a>
+    <span class="muted"><span data-lang="en">Lesson 8</span><span data-lang="pt">Lição 8</span></span>
+    <a href="lesson-09-extraction.html"><span data-lang="en">Next: Structured Data Extraction →</span><span data-lang="pt">Próxima: Extração de Dados Estruturados →</span></a>
+  </nav>
+</div>
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+</body>
+</html>

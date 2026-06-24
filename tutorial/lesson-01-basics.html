@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1 — Your First Agent — AI Agents from Scratch</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+.container { max-width: 820px; margin: 0 auto; padding: 0 24px 64px; }
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--cp-border);
+  font-size: 0.88rem;
+  max-width: 820px;
+  margin: 0 auto;
+}
+nav a {
+  color: var(--cp-link);
+  text-decoration: none;
+}
+nav a:hover { text-decoration: underline; }
+nav .current {
+  color: var(--cp-text-muted);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 40px 0 12px;
+  color: var(--cp-text);
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 40px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cp-border);
+  color: var(--cp-text);
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 28px 0 12px;
+  color: var(--cp-text);
+}
+
+p { margin-bottom: 16px; }
+
+.learn-list {
+  background: var(--cp-accent-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 32px;
+}
+.learn-list h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--cp-accent);
+}
+.learn-list ul {
+  list-style: none;
+  padding: 0;
+}
+.learn-list li {
+  padding: 4px 0;
+  padding-left: 20px;
+  position: relative;
+  color: var(--cp-text);
+}
+.learn-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--cp-accent);
+  font-weight: 700;
+}
+
+.callout {
+  border-left: 4px solid var(--cp-accent);
+  background: var(--cp-highlight);
+  padding: 16px 20px;
+  border-radius: 0 0.625rem 0.625rem 0;
+  margin: 20px 0;
+}
+.callout strong {
+  color: var(--cp-accent);
+}
+
+.warning {
+  border-left: 4px solid var(--cp-warning);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 16px 20px;
+  border-radius: 0 0.625rem 0.625rem 0;
+  margin: 20px 0;
+}
+
+pre {
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 16px 0;
+}
+
+code {
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+}
+
+p code, li code {
+  background: var(--cp-surface-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.diagram {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  text-align: center;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--cp-text);
+}
+
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.82rem;
+  color: var(--cp-text-soft);
+  background: var(--cp-surface-soft);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.try-it {
+  background: var(--cp-surface);
+  border: 2px solid var(--cp-accent);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin: 32px 0;
+}
+.try-it h3 { margin-top: 0; color: var(--cp-accent); }
+
+.annotation {
+  color: var(--cp-text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: -8px 0 16px;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html"><span data-lang="en">← All Lessons</span><span data-lang="pt">← Todas as Lições</span></a>
+  <span class="current"><span data-lang="en">Lesson 1 — Your First Agent</span><span data-lang="pt">Lição 1 — Seu Primeiro Agente</span></span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div id="langSwitcher" class="lang-switcher">
+      <button data-set-lang="en">EN</button>
+      <button data-set-lang="pt">PT</button>
+    </div>
+    <a href="lesson-02-search.html"><span data-lang="en">Next: Real-World Tools →</span><span data-lang="pt">Próxima: Ferramentas Reais →</span></a>
+  </div>
+</nav>
+
+<div class="container">
+
+<h1><span data-lang="en">Lesson 1 — Your First Agent</span><span data-lang="pt">Lição 1 — Seu Primeiro Agente</span></h1>
+
+<div class="learn-list">
+  <h3><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h3>
+  <ul>
+    <li><span data-lang="en">What a tool-calling agent is and how it differs from a plain chatbot</span><span data-lang="pt">O que é um agente com chamada de ferramentas e como ele difere de um simples chatbot</span></li>
+    <li><span data-lang="en">The three core components: <code>OllamaClient</code>, <code>Agent</code>, and tool schemas</span><span data-lang="pt">Os três componentes principais: <code>OllamaClient</code>, <code>Agent</code> e esquemas de ferramentas</span></li>
+    <li><span data-lang="en">How the agent loop works: prompt → tool call → tool result → response</span><span data-lang="pt">Como o loop do agente funciona: prompt → chamada de ferramenta → resultado → resposta</span></li>
+    <li><span data-lang="en">How to define tools as Python functions + JSON schemas</span><span data-lang="pt">Como definir ferramentas como funções Python + esquemas JSON</span></li>
+    <li><span data-lang="en">The <code>tool_registry</code> pattern: connecting schemas to implementations</span><span data-lang="pt">O padrão <code>tool_registry</code>: conectando esquemas às implementações</span></li>
+  </ul>
+</div>
+
+<h2><span data-lang="en">The Big Picture</span><span data-lang="pt">A Visão Geral</span></h2>
+
+<p>
+  <span data-lang="en">A <strong>chatbot</strong> takes a prompt and returns text. An <strong>agent</strong> can also
+  <em>call tools</em> — Python functions that access the real world (APIs, databases, files).
+  The LLM decides <em>which</em> tool to call and <em>what arguments</em> to pass.</span>
+  <span data-lang="pt">Um <strong>chatbot</strong> recebe um prompt e retorna texto. Um <strong>agente</strong> também pode
+  <em>chamar ferramentas</em> — funções Python que acessam o mundo real (APIs, bancos de dados, arquivos).
+  O LLM decide <em>qual</em> ferramenta chamar e <em>quais argumentos</em> passar.</span>
+</p>
+
+<div class="diagram">
+  <span data-lang="en">User prompt</span><span data-lang="pt">Prompt do usuário</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+  <strong><span data-lang="en">LLM decides:</span><span data-lang="pt">O LLM decide:</span></strong> call <code>get_temperature(city="Paris")</code><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+  <span data-lang="en">Agent executes the function → returns <code>"75"</code></span><span data-lang="pt">O agente executa a função → retorna <code>"75"</code></span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+  <strong><span data-lang="en">LLM sees result</span><span data-lang="pt">O LLM vê o resultado</span></strong> <span data-lang="en">→ generates: "The temperature in Paris is 75°F"</span><span data-lang="pt">→ gera: "The temperature in Paris is 75°F"</span>
+</div>
+
+<p>
+  <span data-lang="en">Our framework has a clean separation between three concerns:</span>
+  <span data-lang="pt">Nosso framework tem uma separação clara entre três responsabilidades:</span>
+</p>
+
+<h3><span class="step-num">1</span> <span data-lang="en">OllamaClient — The LLM Transport</span><span data-lang="pt">OllamaClient — O Transporte do LLM</span></h3>
+
+<p>
+  <span data-lang="en">A thin HTTP wrapper around Ollama's OpenAI-compatible API. It handles the network request
+  and parses the JSON response into typed dataclasses.</span>
+  <span data-lang="pt">Um wrapper HTTP fino ao redor da API compatível com OpenAI do Ollama. Ele gerencia a requisição de rede
+  e converte a resposta JSON em dataclasses tipadas.</span>
+</p>
+
+<pre><code># core/client.py
+
+class OllamaClient:
+    def __init__(
+        self,
+        model: str = "gemma4:12b",          # ← default model
+        base_url: str = "http://localhost:11434/v1",
+        timeout: int = 120,
+    ) -> None:
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self.chat = _Chat(self)              # ← mimics OpenAI structure</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">The <code>client.chat.completions.create()</code> interface mirrors OpenAI's SDK so
+  you can swap providers later.</span>
+  <span data-lang="pt">A interface <code>client.chat.completions.create()</code> espelha o SDK da OpenAI
+  para que você possa trocar de provedor posteriormente.</span>
+</p>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">The client knows nothing about agents or tools. It just sends
+  messages to an LLM and returns structured responses. This separation means you can test
+  the client independently, or use it for non-agent tasks.</span>
+  <span data-lang="pt">O cliente não sabe nada sobre agentes ou ferramentas. Ele apenas envia
+  mensagens a um LLM e retorna respostas estruturadas. Essa separação significa que você pode testar
+  o cliente independentemente ou usá-lo para tarefas sem agentes.</span>
+</div>
+
+<h3><span class="step-num">2</span> <span data-lang="en">Data Models — Typed Responses</span><span data-lang="pt">Modelos de Dados — Respostas Tipadas</span></h3>
+
+<p>
+  <span data-lang="en">The client returns Python <code>dataclass</code> instances, not raw dicts:</span>
+  <span data-lang="pt">O cliente retorna instâncias de <code>dataclass</code> Python, não dicionários brutos:</span>
+</p>
+
+<pre><code># core/models.py
+
+@dataclass
+class FunctionCall:
+    name: str           # e.g. "get_temperature"
+    arguments: str      # JSON string, e.g. '{"city": "Paris"}'
+
+@dataclass
+class ToolCall:
+    id: str             # unique call ID (for matching results)
+    type: str           # always "function"
+    function: FunctionCall
+
+@dataclass
+class Message:
+    role: str           # "assistant"
+    content: str        # text response (may be empty if tool_calls present)
+    tool_calls: Optional[List[ToolCall]] = None
+    reasoning: Optional[str] = None  # chain-of-thought (Gemma supports this)</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">Having typed models prevents typos in dict key access and gives you IDE autocompletion.</span>
+  <span data-lang="pt">Ter modelos tipados evita erros de digitação no acesso a chaves de dicionários e fornece autocomplete no IDE.</span>
+</p>
+
+<h3><span class="step-num">3</span> <span data-lang="en">Agent — The Loop</span><span data-lang="pt">Agent — O Loop</span></h3>
+
+<p>
+  <span data-lang="en">The <code>Agent</code> class is the heart of the framework. It implements a simple but powerful loop:</span>
+  <span data-lang="pt">A classe <code>Agent</code> é o coração do framework. Ela implementa um loop simples, mas poderoso:</span>
+</p>
+
+<pre><code># core/agent.py — simplified
+
+class Agent:
+    def __init__(self, client, system, tools, tool_registry, max_iterations=8, trace=False):
+        self.client = client
+        self.tools = tools                # JSON schemas (what the LLM sees)
+        self.tool_registry = tool_registry # Python functions (what gets executed)
+        self.messages = []
+        if system:
+            self.messages.append({"role": "system", "content": system})
+
+    def execute(self, message: str) -> str:
+        self.messages.append({"role": "user", "content": message})
+
+        for iteration in range(1, self.max_iterations + 1):
+            # 1. Send everything to the LLM
+            completion = self.client.chat.completions.create(
+                messages=self.messages,
+                tools=self.tools,
+                tool_choice="auto",
+            )
+            response = completion.choices[0].message
+
+            # 2. Does the LLM want to call a tool?
+            if response.tool_calls:
+                self.messages.append(response.to_dict())
+
+                for tool_call in response.tool_calls:
+                    name = tool_call.function.name
+                    args = json.loads(tool_call.function.arguments)
+                    fn = self.tool_registry[name]          # ← look up function
+                    result = fn(**args)                     # ← execute it
+
+                    self.messages.append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": name,
+                        "content": json.dumps(result),
+                    })
+                continue   # ← go back to step 1 with tool results
+
+            # 3. No tool calls — this is the final answer
+            return response.content</code></pre>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">The loop has only two branches: if the LLM returns
+  <code>tool_calls</code>, execute them and loop back. If it returns plain
+  <code>content</code>, that's the final answer. This simple pattern powers every agent
+  in this tutorial.</span>
+  <span data-lang="pt">O loop tem apenas dois ramos: se o LLM retorna
+  <code>tool_calls</code>, execute-os e volte ao loop. Se retorna
+  <code>content</code> simples, essa é a resposta final. Esse padrão simples alimenta cada agente
+  neste tutorial.</span>
+</div>
+
+<h2><span data-lang="en">Building the Weather Agent</span><span data-lang="pt">Construindo o Agente de Clima</span></h2>
+
+<p><span data-lang="en">Now let's see how <span class="file-ref">examples/weather_agent.py</span> uses these three components.</span><span data-lang="pt">Agora vamos ver como <span class="file-ref">examples/weather_agent.py</span> usa esses três componentes.</span></p>
+
+<h3><span data-lang="en">Step 1: Define a tool function</span><span data-lang="pt">Passo 1: Definir uma função de ferramenta</span></h3>
+
+<p>
+  <span data-lang="en">A tool is just a regular Python function. It receives typed parameters and returns data:</span>
+  <span data-lang="pt">Uma ferramenta é apenas uma função Python comum. Ela recebe parâmetros tipados e retorna dados:</span>
+</p>
+
+<pre><code>def get_temperature(city: str) -> str:
+    """Get the current weather in a given city."""
+    if city.lower() == "san francisco":
+        return "72"
+    if city.lower() == "paris":
+        return "75"
+    return "70"</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">This is a mock — in production you'd call a weather API. The agent doesn't know or care
+  whether the function is real or simulated.</span>
+  <span data-lang="pt">Isso é um mock — em produção você chamaria uma API de clima. O agente não sabe nem se importa
+  se a função é real ou simulada.</span>
+</p>
+
+<h3><span data-lang="en">Step 2: Describe the tool with a JSON schema</span><span data-lang="pt">Passo 2: Descrever a ferramenta com um esquema JSON</span></h3>
+
+<p>
+  <span data-lang="en">The LLM needs a machine-readable description of <em>what</em> the tool does and <em>what parameters</em>
+  it expects. This uses the OpenAI function-calling schema format:</span>
+  <span data-lang="pt">O LLM precisa de uma descrição legível por máquina do que a ferramenta faz e quais parâmetros
+  ela espera. Isso usa o formato de esquema de chamada de função da OpenAI:</span>
+</p>
+
+<pre><code>get_temperature_tool_schema = {
+    "type": "function",
+    "function": {
+        "name": "get_temperature",           # must match the function name
+        "description": "Get the current temperature in a given city.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "description": "The city to get the temperature for.",
+                }
+            },
+            "required": ["city"],
+        },
+    },
+}</code></pre>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">The schema's <code>description</code> fields are critically important.
+  They are the only way the LLM knows what the tool does. A vague description leads to wrong
+  tool selections; a precise one leads to accurate calls.</span>
+  <span data-lang="pt">Os campos <code>description</code> do esquema são criticamente importantes.
+  Eles são a única forma que o LLM tem de saber o que a ferramenta faz. Uma descrição vaga leva a seleções
+  erradas de ferramentas; uma precisa leva a chamadas corretas.</span>
+</div>
+
+<h3><span data-lang="en">Step 3: Wire everything together</span><span data-lang="pt">Passo 3: Conectar tudo</span></h3>
+
+<pre><code># Create the LLM client
+client = OllamaClient(model="gemma4:12b")
+
+# Create the agent with our tool
+agent = Agent(
+    client=client,
+    system="You are a helpful assistant that can answer questions using the provided tools.",
+    tools=[get_temperature_tool_schema],         # what the LLM sees
+    tool_registry={"get_temperature": get_temperature},  # what gets called
+    trace=True,                                  # show the loop internals
+)
+
+# Run it
+response = agent.execute("What's the weather in Paris?")</code></pre>
+
+<p>
+  <span data-lang="en">The <code>tool_registry</code> is a simple dictionary mapping tool names to Python callables.
+  The key <strong>must</strong> match the <code>"name"</code> field in the schema — that's how
+  the Agent knows which function to call when the LLM says "call get_temperature".</span>
+  <span data-lang="pt">O <code>tool_registry</code> é um dicionário simples que mapeia nomes de ferramentas para callables Python.
+  A chave <strong>deve</strong> corresponder ao campo <code>"name"</code> no esquema — é assim que
+  o Agent sabe qual função chamar quando o LLM diz "chame get_temperature".</span>
+</p>
+
+<h2><span data-lang="en">What Happens at Runtime</span><span data-lang="pt">O Que Acontece em Tempo de Execução</span></h2>
+
+<p><span data-lang="en">Here's the exact sequence when you run the weather agent with <code>--trace</code>:</span><span data-lang="pt">Aqui está a sequência exata ao executar o agente de clima com <code>--trace</code>:</span></p>
+
+<div class="diagram" style="text-align: left; padding: 20px 28px;">
+  <strong><span data-lang="en">Iteration 1:</span><span data-lang="pt">Iteração 1:</span></strong><br>
+  <span data-lang="en">→ Send to LLM: [system message, user: "What's the weather in Paris?"]</span><span data-lang="pt">→ Envia ao LLM: [mensagem do sistema, usuário: "What's the weather in Paris?"]</span><br>
+  <span data-lang="en">← LLM returns: tool_calls: [get_temperature(city="Paris")]</span><span data-lang="pt">← LLM retorna: tool_calls: [get_temperature(city="Paris")]
+  </span><br>
+  <span data-lang="en">→ Execute: get_temperature("Paris") → "75"</span><span data-lang="pt">→ Executa: get_temperature("Paris") → "75"</span><br>
+  <span data-lang="en">→ Append tool result to messages</span><span data-lang="pt">→ Adiciona resultado da ferramenta às mensagens</span><br><br>
+  <strong><span data-lang="en">Iteration 2:</span><span data-lang="pt">Iteração 2:</span></strong><br>
+  <span data-lang="en">→ Send to LLM: [system, user, assistant+tool_call, tool_result: "75"]</span><span data-lang="pt">→ Envia ao LLM: [sistema, usuário, assistente+chamada_ferramenta, resultado: "75"]</span><br>
+  <span data-lang="en">← LLM returns: content: "The temperature in Paris is 75°F"</span><span data-lang="pt">← LLM retorna: content: "The temperature in Paris is 75°F"</span><br>
+  <span data-lang="en">→ No tool_calls → return as final answer ✓</span><span data-lang="pt">→ Sem tool_calls → retorna como resposta final ✓</span>
+</div>
+
+<div class="warning">
+  <strong><span data-lang="en">⚠️ Note:</span><span data-lang="pt">⚠️ Nota:</span></strong>
+  <span data-lang="en">The <code>max_iterations</code> parameter (default: 8) prevents infinite loops.
+  If the LLM keeps calling tools without producing a final answer, the agent returns
+  a fallback message after 8 iterations.</span>
+  <span data-lang="pt">O parâmetro <code>max_iterations</code> (padrão: 8) previne loops infinitos.
+  Se o LLM continuar chamando ferramentas sem produzir uma resposta final, o agente retorna
+  uma mensagem de fallback após 8 iterações.</span>
+</div>
+
+<h2><span data-lang="en">Understanding Trace Output</span><span data-lang="pt">Entendendo a Saída de Rastreamento</span></h2>
+
+<p>
+  <span data-lang="en">The <code>--trace</code> flag enables <code>_trace_print()</code>, which logs every step
+  of the loop. This is invaluable for debugging:</span>
+  <span data-lang="pt">A flag <code>--trace</code> habilita <code>_trace_print()</code>, que registra cada etapa
+  do loop. Isso é inestimável para depuração:</span>
+</p>
+
+<pre><code>[TRACE] user
+{"content": "What's the weather in Paris?"}
+
+[TRACE] iteration
+{"index": 1}
+
+[TRACE] assistant_raw
+{"role": "assistant", "content": "", "tool_calls": [...]} 
+
+[TRACE] tool_execution
+{"name": "get_temperature", "args": {"city": "Paris"}, "output": "75"}
+
+[TRACE] iteration
+{"index": 2}
+
+[TRACE] final_response
+"The temperature in Paris is 75°F"</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">Always use <code>--trace</code> when developing a new agent. It shows exactly what the LLM
+  decided and what tools returned.</span>
+  <span data-lang="pt">Sempre use <code>--trace</code> ao desenvolver um novo agente. Isso mostra exatamente o que o LLM
+  decidiu e o que as ferramentas retornaram.</span>
+</p>
+
+<h2><span data-lang="en">Anatomy of the Project</span><span data-lang="pt">Anatomia do Projeto</span></h2>
+
+<p>
+  <span data-lang="en">Here's how the files relate to each other:</span>
+  <span data-lang="pt">Veja como os arquivos se relacionam entre si:</span>
+</p>
+
+<pre><code>SimpleAgent/
+├── core/                    # The framework (you usually don't modify this)
+│   ├── __init__.py          # Re-exports: Agent, OllamaClient, print_final_output
+│   ├── models.py            # FunctionCall, ToolCall, Message, Choice, ChatCompletionResponse
+│   ├── client.py            # OllamaClient — HTTP transport to Ollama
+│   ├── agent.py             # Agent — the tool-calling loop
+│   └── output.py            # print_final_output — optional Rich markdown rendering
+├── examples/
+│   └── weather_agent.py     # ← This lesson's example
+└── requirements.txt</code></pre>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">Every example in this tutorial follows the same pattern:
+  (1) define tool functions, (2) write JSON schemas, (3) create the <code>tool_registry</code> dict,
+  (4) instantiate <code>Agent</code>, (5) call <code>agent.execute(prompt)</code>.
+  The complexity grows in <em>what</em> the tools do, not in <em>how</em> the agent works.</span>
+  <span data-lang="pt">Todo exemplo neste tutorial segue o mesmo padrão:
+  (1) definir funções de ferramenta, (2) escrever esquemas JSON, (3) criar o dicionário <code>tool_registry</code>,
+  (4) instanciar <code>Agent</code>, (5) chamar <code>agent.execute(prompt)</code>.
+  A complexidade cresce no que as ferramentas fazem, não em como o agente funciona.</span>
+</div>
+
+<div class="try-it">
+  <h3><span data-lang="en">🚀 Try it yourself</span><span data-lang="pt">🚀 Experimente</span></h3>
+  <pre><code># Make sure Ollama is running with the gemma4:12b model
+ollama pull gemma4:12b
+
+# Run the weather agent
+cd SimpleAgent
+python examples/weather_agent.py --prompt "What's the weather in Paris?" --trace
+
+# Try a multi-tool-call prompt
+python examples/weather_agent.py --prompt "Compare the weather in Tokyo and San Francisco" --trace</code></pre>
+  <p style="margin-top: 12px; color: var(--cp-text-muted); font-size: 0.88rem;">
+    <span data-lang="en">Watch the trace output — with "Compare Tokyo and SF", the model may call
+    <code>get_temperature</code> twice in a single iteration (parallel tool calls).</span>
+    <span data-lang="pt">Observe a saída de rastreamento — com "Compare Tokyo and SF", o modelo pode chamar
+    <code>get_temperature</code> duas vezes em uma única iteração (chamadas paralelas de ferramentas).</span>
+  </p>
+</div>
+
+</div>
+
+<nav style="border-top: 1px solid var(--cp-border); border-bottom: none;">
+  <a href="index.html"><span data-lang="en">← All Lessons</span><span data-lang="pt">← Todas as Lições</span></a>
+  <span class="current"><span data-lang="en">Lesson 1</span><span data-lang="pt">Lição 1</span></span>
+  <a href="lesson-02-search.html"><span data-lang="en">Next: Real-World Tools →</span><span data-lang="pt">Próxima: Ferramentas Reais →</span></a>
+</nav>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

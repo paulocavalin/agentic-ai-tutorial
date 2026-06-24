@@ -1,0 +1,47 @@
+[
+  {
+    "id": "search_capital",
+    "prompt": "What is the capital of France?",
+    "expected_tools": ["web_search"],
+    "required_substrings": ["Paris"],
+    "forbidden_substrings": ["I don't know", "cannot"],
+    "min_answer_chars": 20,
+    "judge_criteria": "The answer must identify Paris as the capital of France."
+  },
+  {
+    "id": "search_recent_event",
+    "prompt": "Who won the 2024 US Presidential election?",
+    "expected_tools": ["web_search"],
+    "required_substrings": [],
+    "forbidden_substrings": [],
+    "min_answer_chars": 50,
+    "judge_criteria": "The answer must name a specific person as the winner."
+  },
+  {
+    "id": "search_with_source",
+    "prompt": "What is the current population of Brazil? Provide a source.",
+    "expected_tools": ["web_search"],
+    "required_substrings": ["million", "Brazil"],
+    "forbidden_substrings": [],
+    "min_answer_chars": 80,
+    "judge_criteria": "The answer must include a population estimate in millions and reference a source."
+  },
+  {
+    "id": "multi_step_research",
+    "prompt": "Find the latest version of Python and summarize its main new features.",
+    "expected_tools": ["web_search"],
+    "required_substrings": ["Python"],
+    "forbidden_substrings": [],
+    "min_answer_chars": 100,
+    "judge_criteria": "The answer must mention a specific Python version number and at least one new feature."
+  },
+  {
+    "id": "no_hallucination",
+    "prompt": "What is the GDP of the fictional country Ruritania?",
+    "expected_tools": ["web_search"],
+    "required_substrings": [],
+    "forbidden_substrings": ["billion", "trillion", "GDP is"],
+    "min_answer_chars": 20,
+    "judge_criteria": "The answer must acknowledge that Ruritania is a fictional country and not provide a fake GDP figure."
+  }
+]

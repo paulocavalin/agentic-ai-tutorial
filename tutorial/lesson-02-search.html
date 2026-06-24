@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 2 — Real-World Tools — AI Agents from Scratch</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+.container { max-width: 820px; margin: 0 auto; padding: 0 24px 64px; }
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--cp-border);
+  font-size: 0.88rem;
+  max-width: 820px;
+  margin: 0 auto;
+}
+nav a { color: var(--cp-link); text-decoration: none; }
+nav a:hover { text-decoration: underline; }
+nav .current { color: var(--cp-text-muted); font-weight: 600; }
+
+h1 { font-size: 2rem; font-weight: 700; margin: 40px 0 12px; }
+h2 { font-size: 1.4rem; font-weight: 600; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--cp-border); }
+h3 { font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; }
+p { margin-bottom: 16px; }
+
+.learn-list {
+  background: var(--cp-accent-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 32px;
+}
+.learn-list h3 { margin: 0 0 12px; font-size: 1rem; color: var(--cp-accent); }
+.learn-list ul { list-style: none; padding: 0; }
+.learn-list li { padding: 4px 0 4px 20px; position: relative; }
+.learn-list li::before { content: "✓"; position: absolute; left: 0; color: var(--cp-accent); font-weight: 700; }
+
+.prereq {
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  color: var(--cp-text-muted);
+}
+.prereq a { color: var(--cp-link); }
+
+.callout {
+  border-left: 4px solid var(--cp-accent);
+  background: var(--cp-highlight);
+  padding: 16px 20px;
+  border-radius: 0 0.625rem 0.625rem 0;
+  margin: 20px 0;
+}
+.callout strong { color: var(--cp-accent); }
+
+.warning {
+  border-left: 4px solid var(--cp-warning);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 16px 20px;
+  border-radius: 0 0.625rem 0.625rem 0;
+  margin: 20px 0;
+}
+
+pre {
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 16px 0;
+}
+
+code { font-family: Consolas, "Courier New", Courier, monospace; font-size: 0.88rem; }
+p code, li code {
+  background: var(--cp-surface-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.diagram {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  text-align: center;
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.file-ref {
+  font-family: Consolas, "Courier New", Courier, monospace;
+  font-size: 0.82rem;
+  color: var(--cp-text-soft);
+  background: var(--cp-surface-soft);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.try-it {
+  background: var(--cp-surface);
+  border: 2px solid var(--cp-accent);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin: 32px 0;
+}
+.try-it h3 { margin-top: 0; color: var(--cp-accent); }
+
+.annotation {
+  color: var(--cp-text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: -8px 0 16px;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+.compare-table th, .compare-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border: 1px solid var(--cp-border);
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--cp-surface-soft);
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="lesson-01-basics.html"><span data-lang="en">← Lesson 1: Your First Agent</span><span data-lang="pt">← Lição 1: Seu Primeiro Agente</span></a>
+  <span class="current"><span data-lang="en">Lesson 2 — Real-World Tools</span><span data-lang="pt">Lição 2 — Ferramentas Reais</span></span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div id="langSwitcher" class="lang-switcher">
+      <button data-set-lang="en">EN</button>
+      <button data-set-lang="pt">PT</button>
+    </div>
+    <a href="lesson-03-mcp-external.html"><span data-lang="en">Next: MCP External →</span><span data-lang="pt">Próxima: MCP Externo →</span></a>
+  </div>
+</nav>
+
+<div class="container">
+
+<h1><span data-lang="en">Lesson 2 — Real-World Tools</span><span data-lang="pt">Lição 2 — Ferramentas Reais</span></h1>
+
+<div class="prereq">
+  <strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <a href="lesson-01-basics.html"><span data-lang="en">Lesson 1</span><span data-lang="pt">Lição 1</span></a> — <span data-lang="en">you should understand the Agent loop, tool schemas, and tool_registry.</span><span data-lang="pt">você deve entender o loop do Agent, os esquemas de ferramentas e o tool_registry.</span>
+</div>
+
+<div class="learn-list">
+  <h3><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h3>
+  <ul>
+    <li><span data-lang="en">How to give an agent multiple tools that compose together</span><span data-lang="pt">Como dar a um agente múltiplas ferramentas que se combinam</span></li>
+    <li><span data-lang="en">Writing effective system prompts that guide multi-step behavior</span><span data-lang="pt">Escrever prompts de sistema eficazes que guiam comportamentos de múltiplos passos</span></li>
+    <li><span data-lang="en">Multi-iteration tool usage: search → fetch → synthesize</span><span data-lang="pt">Uso de ferramentas em múltiplas iterações: buscar → obter → sintetizar</span></li>
+    <li><span data-lang="en">Working with real APIs (DuckDuckGo web search)</span><span data-lang="pt">Trabalhar com APIs reais (busca web DuckDuckGo)</span></li>
+    <li><span data-lang="en">The "planning" pattern: the LLM explains its next step before calling a tool</span><span data-lang="pt">O padrão de "planejamento": o LLM explica seu próximo passo antes de chamar uma ferramenta</span></li>
+  </ul>
+</div>
+
+<h2><span data-lang="en">From One Tool to Many</span><span data-lang="pt">De Uma Ferramenta para Muitas</span></h2>
+
+<p>
+  <span data-lang="en">In Lesson 1, our agent had a single tool (<code>get_temperature</code>) and used it once.
+  Real-world agents need to <strong>compose multiple tools across several iterations</strong>.
+  The <span class="file-ref">search_agent.py</span> example demonstrates this with two tools:</span>
+  <span data-lang="pt">Na Lição 1, nosso agente tinha uma única ferramenta (<code>get_temperature</code>) e a usava uma vez.
+  Agentes do mundo real precisam <strong>combinar múltiplas ferramentas ao longo de várias iterações</strong>.
+  O exemplo <span class="file-ref">search_agent.py</span> demonstra isso com duas ferramentas:</span>
+</p>
+
+<table class="compare-table">
+  <tr>
+    <th><span data-lang="en">Tool</span><span data-lang="pt">Ferramenta</span></th>
+    <th><span data-lang="en">Purpose</span><span data-lang="pt">Propósito</span></th>
+    <th><span data-lang="en">When used</span><span data-lang="pt">Quando usada</span></th>
+  </tr>
+  <tr>
+    <td><code>web_search</code></td>
+    <td><span data-lang="en">Search DuckDuckGo, return titles + URLs + snippets</span><span data-lang="pt">Busca no DuckDuckGo, retorna títulos + URLs + trechos</span></td>
+    <td><span data-lang="en">To discover relevant sources</span><span data-lang="pt">Para descobrir fontes relevantes</span></td>
+  </tr>
+  <tr>
+    <td><code>web_fetch</code></td>
+    <td><span data-lang="en">Fetch full content from a URL</span><span data-lang="pt">Obtém conteúdo completo de uma URL</span></td>
+    <td><span data-lang="en">To dive deeper into a promising result</span><span data-lang="pt">Para aprofundar em um resultado promissor</span></td>
+  </tr>
+</table>
+
+<div class="diagram" style="text-align: left; padding: 20px 28px;">
+  <strong><span data-lang="en">Typical flow (3-4 iterations):</span><span data-lang="pt">Fluxo típico (3-4 iterações):</span></strong><br><br>
+  <span data-lang="en">Iteration 1: LLM calls <code>web_search("agentic AI trends 2025")</code></span><span data-lang="pt">Iteração 1: LLM chama <code>web_search("agentic AI trends 2025")</code></span><br>
+  <span data-lang="en">Iteration 2: LLM calls <code>web_search("LLM tool use frameworks")</code></span><span data-lang="pt">Iteração 2: LLM chama <code>web_search("LLM tool use frameworks")</code></span><br>
+  <span data-lang="en">Iteration 3: LLM calls <code>web_fetch("https://...")</code> on a promising result</span><span data-lang="pt">Iteração 3: LLM chama <code>web_fetch("https://...")</code> em um resultado promissor</span><br>
+  <span data-lang="en">Iteration 4: LLM produces final answer with citations</span><span data-lang="pt">Iteração 4: LLM produz resposta final com citações</span>
+</div>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">The Agent class doesn't change at all between Lesson 1 and Lesson 2.
+  We just pass more tool schemas and more functions in the registry. The <em>loop</em> is
+  the same — the <em>tools</em> are what make agents powerful.</span>
+  <span data-lang="pt">A classe Agent não muda nada entre a Lição 1 e a Lição 2.
+  Apenas passamos mais esquemas de ferramentas e mais funções no registry. O <em>loop</em> é
+  o mesmo — as <em>ferramentas</em> são o que tornam os agentes poderosos.</span>
+</div>
+
+<h2><span data-lang="en">Implementing Real Tools</span><span data-lang="pt">Implementando Ferramentas Reais</span></h2>
+
+<h3><span class="step-num">1</span> <span data-lang="en">web_search — DuckDuckGo Integration</span><span data-lang="pt">web_search — Integração com DuckDuckGo</span></h3>
+
+<pre><code>from ddgs import DDGS
+
+def web_search(query: str, max_results: int = 5) -> List[Dict[str, str]]:
+    limit = max(1, min(int(max_results), 10))   # clamp to [1, 10]
+    rows = list(DDGS().text(query, max_results=limit))
+    results = []
+    for row in rows:
+        title = row.get("title") or "Untitled"
+        url = row.get("href") or row.get("url") or ""
+        snippet = row.get("body") or row.get("snippet") or ""
+        if not url:
+            continue
+        results.append({"title": str(title), "url": str(url), "snippet": str(snippet)})
+    return results</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">Uses the <code>ddgs</code> library (DuckDuckGo Search). The function returns a list of
+  dicts — the Agent loop serializes it to JSON before sending it back to the LLM.</span>
+  <span data-lang="pt">Usa a biblioteca <code>ddgs</code> (DuckDuckGo Search). A função retorna uma lista de
+  dicionários — o loop do Agent serializa para JSON antes de enviar de volta ao LLM.</span>
+</p>
+
+<div class="warning">
+  <strong><span data-lang="en">⚠️ Note:</span><span data-lang="pt">⚠️ Nota:</span></strong>
+  <span data-lang="en">Tool functions must return JSON-serializable data. The Agent's
+  <code>execute()</code> calls <code>json.dumps(result)</code> on the output. If your function
+  returns a custom class, it will fail.</span>
+  <span data-lang="pt">Funções de ferramenta devem retornar dados serializáveis em JSON. O
+  <code>execute()</code> do Agent chama <code>json.dumps(result)</code> na saída. Se sua função
+  retornar uma classe personalizada, falhará.</span>
+</div>
+
+<h3><span class="step-num">2</span> <span data-lang="en">web_fetch — Page Content Retrieval</span><span data-lang="pt">web_fetch — Recuperação de Conteúdo de Página</span></h3>
+
+<pre><code>def web_fetch(url: str) -> Dict[str, Any]:
+    headers = {
+        "User-Agent": "SimpleAgent/1.0",
+        "Accept": "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
+    }
+    response = requests.get(url, timeout=15, headers=headers)
+    response.raise_for_status()
+
+    content_type = response.headers.get("content-type", "")
+    if "html" in content_type.lower():
+        content = _clean_html(response.text)   # strip tags, scripts, styles
+    else:
+        content = response.text
+
+    return {"url": url, "status_code": response.status_code, "content": content[:3000]}</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">The <code>[:3000]</code> truncation is important — LLMs have limited context windows,
+  and most of a web page is boilerplate. 3000 chars is usually enough for the main content.</span>
+  <span data-lang="pt">O truncamento <code>[:3000]</code> é importante — LLMs têm janelas de contexto limitadas,
+  e a maior parte de uma página web é boilerplate. 3000 caracteres geralmente bastam para o conteúdo principal.</span>
+</p>
+
+<h3><span class="step-num">3</span> <span data-lang="en">Tool Schemas</span><span data-lang="pt">Esquemas de Ferramentas</span></h3>
+
+<p>
+  <span data-lang="en">Each tool needs a JSON schema. Notice how <code>web_search</code> has an optional parameter
+  with constraints:</span>
+  <span data-lang="pt">Cada ferramenta precisa de um esquema JSON. Note como <code>web_search</code> tem um parâmetro opcional
+  com restrições:</span>
+</p>
+
+<pre><code>web_search_tool_schema = {
+    "type": "function",
+    "function": {
+        "name": "web_search",
+        "description": "Search the web and return relevant results with title, URL, and snippet.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search query to run on the web.",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return.",
+                    "minimum": 1,
+                    "maximum": 10,
+                },
+            },
+            "required": ["query"],    # max_results is optional
+        },
+    },
+}</code></pre>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">Making <code>max_results</code> optional with
+  <code>"minimum"</code>/<code>"maximum"</code> constraints guides the LLM to use
+  reasonable values. The LLM reads these constraints from the schema. You can also
+  clamp values in the function body as a safety net (as we do with
+  <code>min(int(max_results), 10)</code>).</span>
+  <span data-lang="pt">Tornar <code>max_results</code> opcional com restrições
+  <code>"minimum"</code>/<code>"maximum"</code> orienta o LLM a usar
+  valores razoáveis. O LLM lê essas restrições do esquema. Você também pode
+  limitar valores no corpo da função como rede de segurança (como fazemos com
+  <code>min(int(max_results), 10)</code>).</span>
+</div>
+
+<h2><span data-lang="en">The System Prompt: Guiding Multi-Step Behavior</span><span data-lang="pt">O Prompt de Sistema: Guiando Comportamentos em Múltiplos Passos</span></h2>
+
+<p>
+  <span data-lang="en">In Lesson 1, our system prompt was one line. For a multi-tool agent, the system prompt becomes a
+  <strong>behavioral specification</strong>:</span>
+  <span data-lang="pt">Na Lição 1, nosso prompt de sistema tinha uma linha. Para um agente com múltiplas ferramentas, o prompt de sistema se torna uma
+  <strong>especificação comportamental</strong>:</span>
+</p>
+
+<pre><code>SYSTEM_PROMPT = (
+    "Voce e um assistente de pesquisa especializado. Seu objetivo e responder "
+    "perguntas complexas com base em evidencias atuais encontradas na web.
+
+"
+    "Ferramentas disponiveis:
+"
+    "- web_search(query, max_results): Pesquisa na web...
+"
+    "- web_fetch(url): Recupera o conteudo completo de uma pagina web.
+
+"
+    "Instrucoes de comportamento:
+"
+    "1. Antes de pesquisar, pense cuidadosamente em quais queries vao "
+    "   encontrar as informacoes mais relevantes.
+"
+    "2. Faca entre 2 e 4 buscas - nao mais que isso.
+"
+    "3. Se um resultado parecer incompleto, use web_fetch para mais detalhes.
+"
+    "4. Na resposta final, sempre cite as fontes utilizadas.
+"
+    "5. Seja objetivo e estruturado. Use markdown.
+"
+    "6. Se nao encontrar informacao suficiente, diga isso claramente.
+"
+    "7. Antes de cada tool call, escreva um plano curto (1-2 frases) "
+    "   explicando o proximo passo."
+)</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">The prompt is in Portuguese — this is an educational repo for Brazilian students.
+  The instructions work the same way in any language.</span>
+  <span data-lang="pt">O prompt está em português — este é um repositório educacional para estudantes brasileiros.
+  As instruções funcionam da mesma forma em qualquer idioma.</span>
+</p>
+
+<p><span data-lang="en">Let's break down what each instruction does:</span><span data-lang="pt">Vamos detalhar o que cada instrução faz:</span></p>
+
+<table class="compare-table">
+  <tr>
+    <th><span data-lang="en">Rule</span><span data-lang="pt">Regra</span></th>
+    <th><span data-lang="en">Why it matters</span><span data-lang="pt">Por que importa</span></th>
+  </tr>
+  <tr>
+    <td><span data-lang="en">"2 to 4 searches"</span><span data-lang="pt">"2 a 4 buscas"</span></td>
+    <td><span data-lang="en">Prevents the agent from burning all 8 iterations on searches</span><span data-lang="pt">Evita que o agente gaste todas as 8 iterações em buscas</span></td>
+  </tr>
+  <tr>
+    <td><span data-lang="en">"Use web_fetch for more details"</span><span data-lang="pt">"Use web_fetch para mais detalhes"</span></td>
+    <td><span data-lang="en">Teaches the model to compose tools (search first, then fetch)</span><span data-lang="pt">Ensina o modelo a combinar ferramentas (buscar primeiro, depois obter)</span></td>
+  </tr>
+  <tr>
+    <td><span data-lang="en">"Always cite sources"</span><span data-lang="pt">"Sempre citar fontes"</span></td>
+    <td><span data-lang="en">Forces the model to ground answers in evidence</span><span data-lang="pt">Força o modelo a fundamentar respostas em evidências</span></td>
+  </tr>
+  <tr>
+    <td><span data-lang="en">"Write a plan before each tool call"</span><span data-lang="pt">"Escrever um plano antes de cada chamada de ferramenta"</span></td>
+    <td><span data-lang="en">Makes the agent's reasoning visible (great for debugging)</span><span data-lang="pt">Torna o raciocínio do agente visível (ótimo para depuração)</span></td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong>
+  <span data-lang="en">System prompts are the primary way to control agent behavior.
+  You're not writing code — you're writing <em>rules</em> that the LLM follows. Iteration count
+  limits, tool sequencing, and output formatting are all controlled through the prompt.</span>
+  <span data-lang="pt">Prompts de sistema são a principal forma de controlar o comportamento do agente.
+  Você não está escrevendo código — está escrevendo <em>regras</em> que o LLM segue. Limites de iteração,
+  sequenciamento de ferramentas e formatação de saída são todos controlados pelo prompt.</span>
+</div>
+
+<h2><span data-lang="en">The Planning Pattern</span><span data-lang="pt">O Padrão de Planejamento</span></h2>
+
+<p>
+  <span data-lang="en">Rule 7 in our prompt — "write a plan before each tool call" — enables a powerful debugging pattern.
+  When the LLM wants to call a tool, it first writes a brief explanation in the <code>content</code>
+  field, <em>alongside</em> the <code>tool_calls</code>.</span>
+  <span data-lang="pt">A regra 7 em nosso prompt — "escrever um plano antes de cada chamada de ferramenta" — habilita um poderoso padrão de depuração.
+  Quando o LLM quer chamar uma ferramenta, ele primeiro escreve uma breve explicação no campo <code>content</code>,
+  <em>junto com</em> os <code>tool_calls</code>.</span>
+</p>
+
+<p>
+  <span data-lang="en">The Agent's trace output shows this:</span>
+  <span data-lang="pt">A saída de rastreamento do Agent mostra isso:</span>
+</p>
+
+<pre><code>[TRACE] assistant_plan
+"Vou pesquisar sobre as principais tendencias em IA agentica para 2025"
+
+[TRACE] tool_execution
+{"name": "web_search", "args": {"query": "agentic AI trends 2025"}, ...}
+
+[TRACE] assistant_plan
+"O primeiro resultado parece promissor, vou buscar mais detalhes"
+
+[TRACE] tool_execution
+{"name": "web_fetch", "args": {"url": "https://..."}, ...}</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">The Agent code handles this at line 59-60: when both <code>tool_calls</code> and
+  <code>content</code> are present, it logs the content as a plan.</span>
+  <span data-lang="pt">O código do Agent trata isso nas linhas 59-60: quando <code>tool_calls</code> e
+  <code>content</code> estão presentes, ele registra o content como um plano.</span>
+</p>
+
+<h2><span data-lang="en">Putting It Together</span><span data-lang="pt">Juntando Tudo</span></h2>
+
+<pre><code>client = OllamaClient(model="gemma4:12b")
+
+agent = Agent(
+    client=client,
+    system=SYSTEM_PROMPT,
+    tools=[web_search_tool_schema, web_fetch_tool_schema],     # 2 tools
+    tool_registry={"web_search": web_search, "web_fetch": web_fetch},
+    trace=True,
+)
+
+response = agent.execute("What are the latest trends in agentic AI for 2025?")</code></pre>
+
+<p>
+  <span data-lang="en">Compared to Lesson 1, the only differences are:</span>
+  <span data-lang="pt">Em comparação com a Lição 1, as únicas diferenças são:</span>
+</p>
+<ul style="margin-bottom: 16px; padding-left: 24px;">
+  <li><span data-lang="en">Two tools instead of one</span><span data-lang="pt">Duas ferramentas em vez de uma</span></li>
+  <li><span data-lang="en">A detailed system prompt with behavioral rules</span><span data-lang="pt">Um prompt de sistema detalhado com regras comportamentais</span></li>
+  <li><span data-lang="en">The agent uses 3-4 iterations instead of 2</span><span data-lang="pt">O agente usa 3-4 iterações em vez de 2</span></li>
+</ul>
+
+<p>
+  <span data-lang="en">The <code>Agent</code> class, the loop, the schema format — all identical. This is the power of the
+  framework: the loop is generic; the tools and prompts are what make each agent unique.</span>
+  <span data-lang="pt">A classe <code>Agent</code>, o loop, o formato do esquema — todos idênticos. Esse é o poder do
+  framework: o loop é genérico; as ferramentas e prompts são o que tornam cada agente único.</span>
+</p>
+
+<h2><span data-lang="en">Why This Matters for Later Lessons</span><span data-lang="pt">Por Que Isso Importa para as Próximas Lições</span></h2>
+
+<p>
+  <span data-lang="en">The <code>search_agent.py</code> module exports its tools and system prompt so other agents can
+  reuse them:</span>
+  <span data-lang="pt">O módulo <code>search_agent.py</code> exporta suas ferramentas e prompt de sistema para que outros agentes possam
+  reutilizá-los:</span>
+</p>
+
+<pre><code># In orchestrator_agent.py (Lesson 3):
+from examples.search_agent import (
+    SYSTEM_PROMPT,
+    web_search, web_fetch,
+    web_search_tool_schema, web_fetch_tool_schema,
+)
+
+# In guardrails_agent.py (Lesson 7):
+from examples.search_agent import web_fetch, web_fetch_tool_schema</code></pre>
+
+<p class="annotation">
+  <span data-lang="en">Tools are composable building blocks. Define them once, reuse them across agents.</span>
+  <span data-lang="pt">Ferramentas são blocos de construção combináveis. Defina uma vez, reutilize em vários agentes.</span>
+</p>
+
+<div class="try-it">
+  <h3><span data-lang="en">🚀 Try it yourself</span><span data-lang="pt">🚀 Experimente</span></h3>
+  <pre><code># Install dependencies
+pip install ddgs requests
+
+# Run the search agent
+python examples/search_agent.py   --prompt "What are the latest trends in agentic AI 2025?"   --trace
+
+# Try different queries
+python examples/search_agent.py   --prompt "Compare React and Vue in 2025"   --trace</code></pre>
+  <p style="margin-top: 12px; color: var(--cp-text-muted); font-size: 0.88rem;">
+    <span data-lang="en">With <code>--trace</code>, observe: How many searches does the agent make? Does it
+    use <code>web_fetch</code>? Does it write a plan before each tool call?</span>
+    <span data-lang="pt">Com <code>--trace</code>, observe: Quantas buscas o agente faz? Ele
+    usa <code>web_fetch</code>? Ele escreve um plano antes de cada chamada de ferramenta?</span>
+  </p>
+</div>
+
+</div>
+
+<nav style="border-top: 1px solid var(--cp-border); border-bottom: none;">
+  <a href="lesson-01-basics.html"><span data-lang="en">← Lesson 1: Your First Agent</span><span data-lang="pt">← Lição 1: Seu Primeiro Agente</span></a>
+  <span class="current"><span data-lang="en">Lesson 2</span><span data-lang="pt">Lição 2</span></span>
+  <a href="lesson-03-mcp-external.html"><span data-lang="en">Next: MCP External →</span><span data-lang="pt">Próxima: MCP Externo →</span></a>
+</nav>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

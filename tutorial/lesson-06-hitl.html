@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const p = new URLSearchParams(window.location.search).get("lang");
+    const lang = p || localStorage.getItem("sa-tutorial-lang") || "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    localStorage.setItem("sa-tutorial-lang", lang);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 6: Human-in-the-Loop Approval — AI Agents from Scratch</title>
+
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef; --cp-bg-elevated: #fcfbf8; --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5; --cp-border: #dedede; --cp-border-strong: #919191;
+  --cp-text: #242424; --cp-text-muted: #5c5c5c; --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b; --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08); --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a; --cp-danger: #dc2626; --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a; --cp-bg-elevated: #343231; --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e; --cp-border: #474747; --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede; --cp-text-muted: #919191; --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1; --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14); --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80; --cp-danger: #f87171; --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+/* i18n: hide inactive language */
+html[data-lang="en"] [data-lang="pt"],
+html[data-lang="pt"] [data-lang="en"] { display: none; }
+.lang-switcher {
+  display: flex;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.lang-switcher button {
+  padding: 6px 14px;
+  border: none;
+  background: var(--cp-surface);
+  color: var(--cp-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.lang-switcher button:not(:last-child) {
+  border-right: 1px solid var(--cp-border);
+}
+.lang-switcher button.active {
+  background: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.lang-switcher button:hover:not(.active) {
+  background: var(--cp-surface-soft);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  line-height: 1.65;
+}
+a { color: var(--cp-link); }
+code, pre { font-family: Consolas, "Courier New", Courier, monospace; }
+.wrapper { max-width: 980px; margin: 0 auto; padding: 24px; }
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 0 0 24px;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--cp-shadow);
+}
+.navbar a { color: var(--cp-link); text-decoration: none; font-weight: 600; }
+.navbar .current { color: var(--cp-text-muted); font-size: 0.95rem; font-weight: 600; }
+.hero, .section, .try-it {
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.hero h1 { margin: 0 0 12px; font-size: 2.1rem; line-height: 1.2; }
+.hero p, .section p, .section li, .try-it p, .note, .table-wrap, .diagram-step { color: var(--cp-text-muted); }
+.lead { font-size: 1.02rem; }
+.kicker {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+  color: var(--cp-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+.card { padding: 16px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-bg-elevated); }
+.card h3, .section h2, .section h3, .try-it h2 { margin-top: 0; color: var(--cp-text); }
+.section h2 { margin-bottom: 12px; font-size: 1.45rem; }
+.section h3 { margin-bottom: 8px; font-size: 1.05rem; }
+.note { padding: 12px 14px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface-soft); }
+.key-insight {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--cp-border);
+  border-left: 6px solid var(--cp-accent);
+  border-radius: 0.625rem;
+  background: var(--cp-accent-soft);
+}
+.key-insight strong { color: var(--cp-text); }
+pre {
+  margin: 16px 0;
+  background: var(--cp-surface-soft);
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--cp-text);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px; border: 1px solid var(--cp-border); text-align: left; vertical-align: top; }
+th { background: var(--cp-surface-soft); color: var(--cp-text); }
+.diagram { display: grid; gap: 12px; margin: 16px 0; }
+.diagram-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; align-items: stretch; }
+.diagram-step { padding: 14px; border: 1px solid var(--cp-border-strong); border-radius: 0.625rem; background: var(--cp-bg-elevated); text-align: center; }
+.arrow { text-align: center; color: var(--cp-text-soft); font-weight: 700; }
+.inline-code { display: inline-block; padding: 2px 8px; border-radius: 0.625rem; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text); }
+.footer { padding: 20px 0 8px; color: var(--cp-text-soft); text-align: center; font-size: 0.9rem; }
+@media (max-width: 720px) {
+  .wrapper { padding: 16px; }
+  .navbar { flex-direction: column; align-items: flex-start; }
+  .hero h1 { font-size: 1.8rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <nav class="navbar">
+    <a href="lesson-05-guardrails.html"><span data-lang="en">← Lesson 5</span><span data-lang="pt">← Lição 5</span></a>
+    <span class="current"><span data-lang="en">Lesson 6</span><span data-lang="pt">Lição 6</span></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="lang-switcher" id="langSwitcher">
+        <button data-set-lang="en">EN</button>
+        <button data-set-lang="pt">PT</button>
+      </div>
+      <a href="lesson-07-orchestrator.html"><span data-lang="en">Lesson 7 →</span><span data-lang="pt">Lição 7 →</span></a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="kicker"><span data-lang="en">Advanced · Human Oversight</span><span data-lang="pt">Avançado · Supervisão Humana</span></div>
+    <h1><span data-lang="en">Lesson 6: Human-in-the-Loop Approval</span><span data-lang="pt">Lição 6: Aprovação Human-in-the-Loop</span></h1>
+    <p class="lead"><span data-lang="en">Autonomy is useful until the agent can delete, archive, or mutate something expensive. <span class="inline-code">examples/hitl_agent.py</span> shows a practical checkpoint pattern: let the agent reason freely, but force human approval right before destructive tool calls.</span><span data-lang="pt">Autonomia é útil até o agent poder apagar, arquivar ou alterar algo caro. <span class="inline-code">examples/hitl_agent.py</span> mostra um padrão prático de checkpoint: deixe o agent raciocinar livremente, mas force aprovação humana logo antes de chamadas destrutivas de tool.</span></p>
+    <h3><span data-lang="en">What you'll learn</span><span data-lang="pt">O que você vai aprender</span></h3>
+    <ul>
+      <li><span data-lang="en">How to classify tools as read-only or destructive.</span><span data-lang="pt">Como classificar tools como read-only ou destrutivas.</span></li>
+      <li><span data-lang="en">How an approval checkpoint becomes part of the runtime, not just the prompt.</span><span data-lang="pt">Como um checkpoint de aprovação vira parte do runtime, e não só do prompt.</span></li>
+      <li><span data-lang="en">How to wrap a registry so destructive tools pause for confirmation.</span><span data-lang="pt">Como envolver um registry para que tools destrutivas parem para confirmação.</span></li>
+      <li><span data-lang="en">How the agent behaves when approval is denied.</span><span data-lang="pt">Como o agent se comporta quando a aprovação é negada.</span></li>
+    </ul>
+    <p class="note"><strong><span data-lang="en">Prerequisites:</span><span data-lang="pt">Pré-requisitos:</span></strong> <span data-lang="en">Lessons 1 and 2 explain tool schemas and registries. Lesson 7 is especially helpful because HITL is another wrapper pattern around the same underlying Agent loop.</span><span data-lang="pt">As Lições 1 e 2 explicam schemas e registries de tool. A Lição 7 é especialmente útil porque HITL é outro padrão de wrapper em volta do mesmo loop base do Agent.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Why HITL belongs in code, not only in prompts</span><span data-lang="pt">Por que HITL deve ficar no código, e não só em prompts</span></h2>
+    <p><span data-lang="en">The system prompt tells the model that destructive tools require approval, but the stronger guarantee comes from Python. Even if the model eagerly calls <span class="inline-code">delete_files</span>, the wrapper stops execution and asks a human first.</span><span data-lang="pt">O system prompt diz ao modelo que tools destrutivas exigem aprovação, mas a garantia mais forte vem do Python. Mesmo que o modelo chame <span class="inline-code">delete_files</span> com pressa, o wrapper para a execução e pergunta primeiro a um humano.</span></p>
+    <div class="diagram">
+      <div class="diagram-row">
+        <div class="diagram-step"><strong><span data-lang="en">User Request</span><span data-lang="pt">Pedido do Usuário</span></strong><br><span data-lang="en">“Clean old backups”</span><span data-lang="pt">“Limpe backups antigos”</span></div>
+        <div class="diagram-step"><strong>Agent</strong><br><span data-lang="en">Plans and inspects state</span><span data-lang="pt">Planeja e inspeciona o estado</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Read-only tool</span><span data-lang="pt">Tool read-only</span></strong><br><span data-lang="en"><code>list_backups</code> runs immediately</span><span data-lang="pt"><code>list_backups</code> roda na hora</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Approval Gate</span><span data-lang="pt">Gate de Aprovação</span></strong><br><span data-lang="en"><code>delete_files</code> pauses here</span><span data-lang="pt"><code>delete_files</code> pausa aqui</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Human Decision</span><span data-lang="pt">Decisão Humana</span></strong><br><span data-lang="en">Approve or deny</span><span data-lang="pt">Aprovar ou negar</span></div>
+        <div class="diagram-step"><strong><span data-lang="en">Final Action</span><span data-lang="pt">Ação Final</span></strong><br><span data-lang="en">Execute or suggest alternatives</span><span data-lang="pt">Executar ou sugerir alternativas</span></div>
+      </div>
+    </div>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">the model can propose a destructive action, but only the runtime may authorize it. That separation prevents “the prompt said yes” from becoming an implicit permission system.</span><span data-lang="pt">o modelo pode propor uma ação destrutiva, mas só o runtime pode autorizá-la. Essa separação evita que “o prompt disse sim” vire um sistema implícito de permissões.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Destructive vs. read-only tool classification</span><span data-lang="pt">Classificação de tools: destrutivas vs. read-only</span></h2>
+    <p><span data-lang="en">The example uses simulated infrastructure tools so the behavior is safe to demo. The important idea is the classification layer, not the cloud vendor.</span><span data-lang="pt">O exemplo usa tools simuladas de infraestrutura para que o comportamento seja seguro na demo. A ideia importante é a camada de classificação, não o provedor de cloud.</span></p>
+    <pre><code>def list_backups(bucket: str, older_than_days: int = 90) -&gt; Dict[str, Any]:
+    # read-only inventory of candidate files
+
+def delete_files(bucket: str, files: List[str]) -&gt; Dict[str, Any]:
+    # DESTRUCTIVE: permanently deletes backups
+
+def archive_to_glacier(bucket: str, files: List[str]) -&gt; Dict[str, Any]:
+    # DESTRUCTIVE: changes storage tier and retrieval behavior
+
+_DESTRUCTIVE_TOOLS = {"delete_files", "archive_to_glacier"}
+</code></pre>
+    <p><span data-lang="en">Read-only tools like <span class="inline-code">list_backups</span> and <span class="inline-code">check_disk_usage</span> execute without interruption. Destructive tools enter a different path where a checkpoint is mandatory.</span><span data-lang="pt">Tools read-only como <span class="inline-code">list_backups</span> e <span class="inline-code">check_disk_usage</span> executam sem interrupção. Tools destrutivas entram em outro caminho em que o checkpoint é obrigatório.</span></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th><span data-lang="en">Tool</span><span data-lang="pt">Tool</span></th><th><span data-lang="en">Category</span><span data-lang="pt">Categoria</span></th><th><span data-lang="en">Why</span><span data-lang="pt">Por quê</span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span data-lang="en">list_backups</span><span data-lang="pt">list_backups</span></td><td><span data-lang="en">Read-only</span><span data-lang="pt">Read-only</span></td><td><span data-lang="en">It reveals state but does not modify it.</span><span data-lang="pt">Ela revela o estado, mas não o modifica.</span></td></tr>
+          <tr><td><span data-lang="en">check_disk_usage</span><span data-lang="pt">check_disk_usage</span></td><td><span data-lang="en">Read-only</span><span data-lang="pt">Read-only</span></td><td><span data-lang="en">Pure inspection, useful for planning.</span><span data-lang="pt">Inspeção pura, útil para planejamento.</span></td></tr>
+          <tr><td><span data-lang="en">delete_files</span><span data-lang="pt">delete_files</span></td><td><span data-lang="en">Destructive</span><span data-lang="pt">Destrutiva</span></td><td><span data-lang="en">Irreversible data removal.</span><span data-lang="pt">Remoção irreversível de dados.</span></td></tr>
+          <tr><td><span data-lang="en">archive_to_glacier</span><span data-lang="pt">archive_to_glacier</span></td><td><span data-lang="en">Destructive</span><span data-lang="pt">Destrutiva</span></td><td><span data-lang="en">Changes storage class and operational behavior.</span><span data-lang="pt">Muda a classe de storage e o comportamento operacional.</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The approval checkpoint UI</span><span data-lang="pt">A UI do checkpoint de aprovação</span></h2>
+    <p><span data-lang="en"><span class="inline-code">_format_checkpoint()</span> builds the terminal panel shown to the operator. It includes the tool name, exact JSON arguments, and the decision menu.</span><span data-lang="pt"><span class="inline-code">_format_checkpoint()</span> monta o painel de terminal mostrado ao operador. Ele inclui o nome da tool, os argumentos JSON exatos e o menu de decisão.</span></p>
+    <pre><code>def _format_checkpoint(tool_name: str, args: Dict[str, Any]) -&gt; str:
+    lines = [
+        "╔══════════════════════════════════════════════════════════════╗",
+        "║        ⚠  APROVAÇÃO NECESSÁRIA — AÇÃO DESTRUTIVA  ⚠         ║",
+        f"  Ferramenta : {tool_name}",
+        f"  Argumentos : {json.dumps(args, ensure_ascii=False, indent=4)}",
+        "  [A] Aprovar   [N] Negar   [D] Detalhes da ferramenta",
+    ]
+    return "
+".join(lines)
+</code></pre>
+    <p><span data-lang="en">This is not just cosmetic. Good HITL checkpoints give the human enough context to make a decision quickly. “Approve delete?” is weak. “Approve deleting these exact eight files from this exact bucket?” is actionable.</span><span data-lang="pt">Isto não é só cosmético. Bons checkpoints de HITL dão contexto suficiente para o humano decidir rápido. “Aprovar delete?” é fraco. “Aprovar a exclusão destes oito arquivos exatos deste bucket exato?” é acionável.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">a checkpoint is part audit log, part UX. The better the summary, the less likely the human is to approve blindly.</span><span data-lang="pt">um checkpoint é parte audit log, parte UX. Quanto melhor o resumo, menor a chance de o humano aprovar no automático.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">The interactive gate: <span class="inline-code">_ask_approval()</span></span><span data-lang="pt">O gate interativo: <span class="inline-code">_ask_approval()</span></span></h2>
+    <p><span data-lang="en">The gate prints the checkpoint, optionally short-circuits for demo mode, and then loops on terminal input until the operator approves, rejects, or asks for details.</span><span data-lang="pt">O gate imprime o checkpoint, opcionalmente encurta o caminho no modo demo e depois entra em loop no terminal até o operador aprovar, rejeitar ou pedir detalhes.</span></p>
+    <pre><code>def _ask_approval(tool_name: str, args: Dict[str, Any], auto_approve: bool) -&gt; Tuple[bool, str]:
+    print(_format_checkpoint(tool_name, args))
+
+    if auto_approve:
+        print("[AUTO-APPROVE] Aprovação automática ativada.")
+        return True, "auto-approved"
+
+    while True:
+        choice = input("  Sua decisão [a/N]: ").strip().lower()
+        if choice in ("a", "s", "y", "sim", "yes"):
+            return True, ""
+        elif choice in ("n", "no", "nao", "não", ""):
+            reason = input("  Motivo (opcional): ").strip()
+            return False, reason or "rejected by operator"
+        elif choice == "d":
+            # show tool documentation
+</code></pre>
+    <p><span data-lang="en">There are two subtle advantages here. First, denials return a reason string, which helps the agent respond intelligently. Second, the <span class="inline-code">d</span> path provides tool details without leaving the flow.</span><span data-lang="pt">Há duas vantagens sutis aqui. Primeiro, negativas retornam uma string de motivo, o que ajuda o agent a responder com inteligência. Segundo, o caminho <span class="inline-code">d</span> mostra detalhes da tool sem sair do fluxo.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Wrapping the registry with approval logic</span><span data-lang="pt">Envolvendo o registry com lógica de aprovação</span></h2>
+    <p><span data-lang="en">The most reusable function is <span class="inline-code">make_guarded_registry()</span>. It walks the base registry and only wraps tools listed in <span class="inline-code">_DESTRUCTIVE_TOOLS</span>.</span><span data-lang="pt">A função mais reutilizável é <span class="inline-code">make_guarded_registry()</span>. Ela percorre o registry base e só envolve as tools listadas em <span class="inline-code">_DESTRUCTIVE_TOOLS</span>.</span></p>
+    <pre><code>def make_guarded_registry(base_registry: Dict, auto_approve: bool, trace: bool) -&gt; Dict:
+    guarded = {}
+    for name, fn in base_registry.items():
+        if name in _DESTRUCTIVE_TOOLS:
+            def _make_wrapper(fn_=fn, name_=name):
+                def wrapper(**kwargs):
+                    approved, reason = _ask_approval(name_, kwargs, auto_approve)
+                    if not approved:
+                        return {
+                            "status": "denied",
+                            "tool": name_,
+                            "reason": reason,
+                            "note": "O agente deve propor uma alternativa ou encerrar a tarefa.",
+                        }
+                    return fn_(**kwargs)
+                return wrapper
+            guarded[name] = _make_wrapper()
+        else:
+            guarded[name] = fn
+    return guarded
+</code></pre>
+    <p><span data-lang="en">Notice that the tool schema does not change. The LLM still sees the same tool names and parameters. Only the runtime behavior changes, which keeps the agent prompt simple and the safety logic centralized.</span><span data-lang="pt">Repare que o schema da tool não muda. O LLM continua vendo os mesmos nomes e parâmetros. Só o comportamento em runtime muda, o que mantém o prompt do agent simples e a lógica de segurança centralizada.</span></p>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">How the agent adapts when an operation is denied</span><span data-lang="pt">Como o agent se adapta quando uma operação é negada</span></h2>
+    <p><span data-lang="en">When a destructive tool is rejected, the wrapper returns a structured denial payload instead of throwing an exception. That is important: the agent can read the denial and pivot.</span><span data-lang="pt">Quando uma tool destrutiva é rejeitada, o wrapper retorna um payload estruturado de negação em vez de lançar uma exceção. Isso é importante: o agent pode ler a negativa e pivotar.</span></p>
+    <pre><code>{
+  "status": "denied",
+  "tool": "delete_files",
+  "reason": "backup needed for audit",
+  "note": "O agente deve propor uma alternativa ou encerrar a tarefa."
+}</code></pre>
+    <p><span data-lang="en">Because the tool result is still valid JSON, the model can answer with alternatives such as archiving to Glacier, deleting only a subset, or stopping entirely. This is a graceful failure mode, not a crash.</span><span data-lang="pt">Como o resultado da tool continua sendo JSON válido, o modelo pode responder com alternativas como arquivar no Glacier, apagar só um subconjunto ou parar de vez. Isso é um modo de falha elegante, não um crash.</span></p>
+    <div class="lesson-grid">
+      <div class="card">
+        <h3><span data-lang="en">If approved</span><span data-lang="pt">Se for aprovado</span></h3>
+        <p><span data-lang="en">The wrapper calls the real function and the agent reports concrete results such as count, size, and status.</span><span data-lang="pt">O wrapper chama a função real e o agent relata resultados concretos, como quantidade, tamanho e status.</span></p>
+      </div>
+      <div class="card">
+        <h3><span data-lang="en">If denied</span><span data-lang="pt">Se for negado</span></h3>
+        <p><span data-lang="en">The wrapper returns context the model can use to suggest safer next steps.</span><span data-lang="pt">O wrapper retorna contexto que o modelo pode usar para sugerir próximos passos mais seguros.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Auto-approve mode for CI and demos</span><span data-lang="pt">Modo auto-approve para CI e demos</span></h2>
+    <p><span data-lang="en">The flag <span class="inline-code">--auto-approve</span> bypasses the prompt and returns approval immediately. This is useful when you want a deterministic demo or a non-interactive environment.</span><span data-lang="pt">A flag <span class="inline-code">--auto-approve</span> pula o prompt e retorna aprovação imediatamente. Isso é útil quando você quer uma demo determinística ou um ambiente não interativo.</span></p>
+    <pre><code>python examples/hitl_agent.py --auto-approve
+python examples/hitl_agent.py --prompt "Delete old backup files" --trace
+</code></pre>
+    <p><span data-lang="en">In real production systems, auto-approve should be tightly controlled because it effectively changes the trust policy from “human confirms” to “runtime executes.” For teaching, though, it helps you show the full loop without typing into the terminal.</span><span data-lang="pt">Em sistemas reais de produção, auto-approve deve ser controlado de perto porque ele muda a política de confiança de “o humano confirma” para “o runtime executa”. Para ensino, porém, ele ajuda a mostrar o loop completo sem precisar digitar no terminal.</span></p>
+    <div class="key-insight"><strong><span data-lang="en">Key Insight:</span><span data-lang="pt">Insight Chave:</span></strong> <span data-lang="en">HITL is a policy choice. The same wrapper can require manual approval in production and automatic approval in a test harness.</span><span data-lang="pt">HITL é uma escolha de política. O mesmo wrapper pode exigir aprovação manual em produção e aprovação automática em um test harness.</span></div>
+  </section>
+
+  <section class="section">
+    <h2><span data-lang="en">Why this pattern generalizes</span><span data-lang="pt">Por que este padrão generaliza</span></h2>
+    <p><span data-lang="en">Today the example protects backup tools, but the same pattern works for:</span><span data-lang="pt">Hoje o exemplo protege tools de backup, mas o mesmo padrão serve para:</span></p>
+    <ul>
+      <li><span data-lang="en">Deleting records in a database.</span><span data-lang="pt">Apagar registros em um banco de dados.</span></li>
+      <li><span data-lang="en">Editing access-control policies.</span><span data-lang="pt">Editar políticas de controle de acesso.</span></li>
+      <li><span data-lang="en">Sending high-impact emails or notifications.</span><span data-lang="pt">Enviar emails ou notificações de alto impacto.</span></li>
+      <li><span data-lang="en">Executing shell commands outside a read-only mode.</span><span data-lang="pt">Executar comandos de shell fora de um modo read-only.</span></li>
+    </ul>
+    <p><span data-lang="en">The core recipe is always the same: classify risky tools, wrap them, show exact arguments, and return structured results for approval or denial.</span><span data-lang="pt">A receita central é sempre a mesma: classifique tools arriscadas, envolva-as, mostre os argumentos exatos e retorne resultados estruturados para aprovação ou negação.</span></p>
+  </section>
+
+  <section class="try-it">
+    <h2><span data-lang="en">🚀 Try it</span><span data-lang="pt">🚀 Experimente</span></h2>
+    <p><span data-lang="en">Run the infrastructure agent and watch how it pauses only when it reaches a destructive action.</span><span data-lang="pt">Rode o agent de infraestrutura e veja como ele pausa só quando chega a uma ação destrutiva.</span></p>
+    <pre><code>python examples/hitl_agent.py --prompt "Preciso liberar espaço no bucket s3://prod-backups. Delete backups com mais de 90 dias."</code></pre>
+  </section>
+
+  <nav class="navbar">
+    <a href="lesson-05-guardrails.html"><span data-lang="en">← Lesson 5</span><span data-lang="pt">← Lição 5</span></a>
+    <span class="current"><span data-lang="en">Lesson 6</span><span data-lang="pt">Lição 6</span></span>
+    <a href="lesson-07-orchestrator.html"><span data-lang="en">Lesson 7 →</span><span data-lang="pt">Lição 7 →</span></a>
+  </nav>
+  <div class="footer"><span data-lang="en">SimpleAgent Tutorial · Advanced lesson 8</span><span data-lang="pt">Tutorial SimpleAgent · Lição avançada 8</span></div>
+</div>
+
+<script>
+  (() => {
+    const lang = document.documentElement.getAttribute("data-lang") || "en";
+    const btns = document.querySelectorAll("#langSwitcher button");
+    btns.forEach(btn => {
+      if (btn.getAttribute("data-set-lang") === lang) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        const newLang = btn.getAttribute("data-set-lang");
+        document.documentElement.setAttribute("data-lang", newLang);
+        localStorage.setItem("sa-tutorial-lang", newLang);
+        btns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "type": "function",
+  "function": {
+    "name": "web_fetch",
+    "description": "Fetch full content from a given URL.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL to fetch content from."
+        }
+      },
+      "required": [
+        "url"
+      ]
+    }
+  }
+}
