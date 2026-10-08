@@ -12,7 +12,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamablehttp_client
+
+try:
+    from mcp.client.streamable_http import streamable_http_client
+except ImportError:
+    from mcp.client.streamable_http import streamablehttp_client as streamable_http_client
 
 
 def _mcp_schema_to_openai(tool: types.Tool) -> Dict[str, Any]:
@@ -90,12 +94,12 @@ class MCPAgentClient:
 
     async def __aenter__(self) -> "MCPAgentClient":
         if self._is_http:
-            self._transport_context = streamablehttp_client(self.server_params)
+            self._transport_context = streamable_http_client(self.server_params)
         else:
             self._transport_context = stdio_client(self.server_params)
 
         result = await self._transport_context.__aenter__()
-        # streamablehttp_client yields (read, write, get_session_id)
+        # streamable_http_client yields (read, write, get_session_id)
         # stdio_client yields (read, write)
         self._read, self._write = result[0], result[1]
 
